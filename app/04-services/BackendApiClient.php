@@ -433,11 +433,9 @@ final class BackendApiClient
         $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         if ($responseBody === false) {
             $err = curl_error($ch);
-            curl_close($ch);
             throw new \RuntimeException($err !== '' ? $err : 'curl_exec failed');
         }
 
-        curl_close($ch);
         self::$lastResponseHeaders = $responseHeaders;
 
         return [
@@ -482,7 +480,7 @@ final class BackendApiClient
         self::$lastResponseHeaders = null;
         $responseBody = @file_get_contents($url, false, $context);
         /** @var list<string> $rawHeaders */
-        $rawHeaders = isset($http_response_header) && is_array($http_response_header) ? $http_response_header : [];
+        $rawHeaders = $this->lastStreamResponseHeaders();
         self::$lastResponseHeaders = $rawHeaders;
 
         $status = 0;
@@ -499,6 +497,22 @@ final class BackendApiClient
             'body' => $responseBody,
             'headers' => self::$lastResponseHeaders,
         ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function lastStreamResponseHeaders(): array
+    {
+        if (function_exists('http_get_last_response_headers')) {
+            $headers = http_get_last_response_headers();
+
+            return is_array($headers) ? $headers : [];
+        }
+
+        global $http_response_header;
+
+        return isset($http_response_header) && is_array($http_response_header) ? $http_response_header : [];
     }
 
     /**
