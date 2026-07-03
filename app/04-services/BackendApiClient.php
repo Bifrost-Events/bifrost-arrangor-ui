@@ -480,7 +480,12 @@ final class BackendApiClient
         self::$lastResponseHeaders = null;
         $responseBody = @file_get_contents($url, false, $context);
         /** @var list<string> $rawHeaders */
-        $rawHeaders = $this->lastStreamResponseHeaders();
+        if (PHP_VERSION_ID >= 80500) {
+            $headers = function_exists('http_get_last_response_headers') ? http_get_last_response_headers() : null;
+            $rawHeaders = is_array($headers) ? $headers : [];
+        } else {
+            $rawHeaders = isset($http_response_header) && is_array($http_response_header) ? $http_response_header : [];
+        }
         self::$lastResponseHeaders = $rawHeaders;
 
         $status = 0;
@@ -497,22 +502,6 @@ final class BackendApiClient
             'body' => $responseBody,
             'headers' => self::$lastResponseHeaders,
         ];
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function lastStreamResponseHeaders(): array
-    {
-        if (function_exists('http_get_last_response_headers')) {
-            $headers = http_get_last_response_headers();
-
-            return is_array($headers) ? $headers : [];
-        }
-
-        global $http_response_header;
-
-        return isset($http_response_header) && is_array($http_response_header) ? $http_response_header : [];
     }
 
     /**
