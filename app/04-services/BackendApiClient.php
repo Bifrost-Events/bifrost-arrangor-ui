@@ -480,11 +480,12 @@ final class BackendApiClient
         self::$lastResponseHeaders = null;
         $responseBody = @file_get_contents($url, false, $context);
         /** @var list<string> $rawHeaders */
-        if (PHP_VERSION_ID >= 80500) {
-            $headers = function_exists('http_get_last_response_headers') ? http_get_last_response_headers() : null;
+        if (function_exists('http_get_last_response_headers')) {
+            $headers = http_get_last_response_headers();
             $rawHeaders = is_array($headers) ? $headers : [];
         } else {
-            $rawHeaders = isset($http_response_header) && is_array($http_response_header) ? $http_response_header : [];
+            /** @var list<string> $rawHeaders */
+            $rawHeaders = include __DIR__ . '/legacy_stream_headers.inc.php';
         }
         self::$lastResponseHeaders = $rawHeaders;
 
