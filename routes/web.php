@@ -41,6 +41,15 @@ return function (array $app): Router {
     $router->get('/stevner/stevneadmin', fn () => $stevneAdmin->index());
     $router->post('/stevner', fn () => $competitions->createSubmit());
     $router->get('/stevner/{id}/stevneadmin', fn (int $id) => $stevneAdmin->show($id));
+    $router->get('/stevner/{id}/stevneadmin/sok-deltaker', fn (int $id) => $stevneAdmin->searchParticipants($id));
+    $router->post('/stevner/{id}/stevneadmin/generer-lag', fn (int $id) => $stevneAdmin->generateSlots($id));
+    $router->post('/stevner/{id}/stevneadmin/godkjenning', fn (int $id) => $stevneAdmin->approval($id));
+    $router->post('/stevner/{id}/stevneadmin/lag/{slot}/lagre', fn (int $id, int $slot) => $stevneAdmin->saveSlot($id, $slot));
+    $router->post('/stevner/{id}/stevneadmin/lag/{slot}/laas', fn (int $id, int $slot) => $stevneAdmin->lockSlot($id, $slot));
+    $router->post('/stevner/{id}/stevneadmin/lag/{slot}/tilordne', fn (int $id, int $slot) => $stevneAdmin->assign($id, $slot));
+    $router->post('/stevner/{id}/stevneadmin/lag/{slot}/fjern', fn (int $id, int $slot) => $stevneAdmin->remove($id, $slot));
+    $router->post('/stevner/{id}/stevneadmin/reserver-lag', fn (int $id) => $stevneAdmin->reserveSlot($id));
+    $router->post('/stevner/{id}/stevneadmin/reserver-skive', fn (int $id) => $stevneAdmin->reserveFigure($id));
     $router->get('/stevner/{id}', fn (int $id) => $competitions->editForm($id));
     $router->post('/stevner/{id}', fn (int $id) => $competitions->updateSubmit($id));
 

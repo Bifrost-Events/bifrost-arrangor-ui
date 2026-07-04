@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Support;
 
 use App\Service\AuthService;
+use App\Service\BackendApiClient;
 
 final class Auth
 {
@@ -24,6 +25,18 @@ final class Auth
         $user = self::user();
 
         return $user !== null && AuthService::canAccessOrganizer($user);
+    }
+
+    public static function refreshFromBackend(): void
+    {
+        if (!self::check() || Session::getBackendCookie() === '') {
+            return;
+        }
+
+        $me = (new BackendApiClient())->me();
+        if (($me['ok'] ?? false) && is_array($me['data']['user'] ?? null)) {
+            Session::setAuth($me['data']['user']);
+        }
     }
 
     /**

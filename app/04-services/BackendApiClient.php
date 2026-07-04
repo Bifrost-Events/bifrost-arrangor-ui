@@ -215,6 +215,28 @@ final class BackendApiClient
     }
 
     /**
+     * @param array<string, mixed> $body
+     * @return array{ok: bool, status: int, data: array<string, mixed>|null, error: string|null, errors?: array<string, string>}
+     */
+    public function reserveOrganizerCompetitionSlot(int $organizationId, int $competitionId, array $body): array
+    {
+        $body['organization_id'] = $organizationId;
+
+        return $this->post('/api/organizer/competitions/' . $competitionId . '/reserve-slot', $body);
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     * @return array{ok: bool, status: int, data: array<string, mixed>|null, error: string|null, errors?: array<string, string>}
+     */
+    public function reserveOrganizerCompetitionFigure(int $organizationId, int $competitionId, array $body): array
+    {
+        $body['organization_id'] = $organizationId;
+
+        return $this->post('/api/organizer/competitions/' . $competitionId . '/reserve-figure', $body);
+    }
+
+    /**
      * @return array{ok: bool, status: int, data: array<string, mixed>|null, error: string|null, errors?: array<string, string>}
      */
     public function organizerParticipants(int $organizationId): array
@@ -257,6 +279,24 @@ final class BackendApiClient
 
         return $this->post(
             '/api/organizer/competitions/' . $competitionId . '/slots/' . $slot . '/results',
+            $body
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     * @return array{ok: bool, status: int, data: array<string, mixed>|null, error: string|null, errors?: array<string, string>}
+     */
+    public function setOrganizerCompetitionSlotLock(
+        int $organizationId,
+        int $competitionId,
+        int $slot,
+        array $body,
+    ): array {
+        $body['organization_id'] = $organizationId;
+
+        return $this->post(
+            '/api/organizer/competitions/' . $competitionId . '/slots/' . $slot . '/lock',
             $body
         );
     }

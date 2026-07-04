@@ -72,7 +72,7 @@ class Router
                     for ($i = 0; $i < count($paramNames); $i++) {
                         $raw = $m[$i + 1] ?? '';
                         $name = $paramNames[$i] ?? '';
-                        if (str_ends_with(strtolower($name), 'id') || $name === 'id') {
+                        if ($raw !== '' && ctype_digit($raw)) {
                             $params[$name] = (int) $raw;
                         } else {
                             $params[$name] = $raw;

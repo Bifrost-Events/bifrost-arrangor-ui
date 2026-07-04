@@ -6,12 +6,34 @@ namespace App\Support;
 
 final class EnvLoader
 {
+    /**
+     * Laster miljøvariabler.
+     *
+     * - BIFROST_DOTENV satt (CLI/Apache): kun den filen (f.eks. .env.local-quality for Playwright)
+     * - Ellers: .env, deretter .env.local som overlay (daglig utvikling)
+     */
     public static function load(string $basePath): void
     {
+        $basePath = rtrim($basePath, '/\\');
         $requested = trim((string) (getenv('BIFROST_DOTENV') ?: ($_SERVER['BIFROST_DOTENV'] ?? '')));
-        $envFileName = $requested !== '' ? basename($requested) : '.env';
-        $envFile = rtrim($basePath, '/\\') . DIRECTORY_SEPARATOR . $envFileName;
 
+        if ($requested !== '') {
+            self::loadFile($basePath, basename($requested));
+
+            return;
+        }
+
+        self::loadFile($basePath, '.env');
+        self::loadFile($basePath, '.env.local');
+    }
+
+    private static function loadFile(string $basePath, string $fileName): void
+    {
+        if (!self::isAllowedEnvFileName($fileName)) {
+            return;
+        }
+
+        $envFile = $basePath . DIRECTORY_SEPARATOR . $fileName;
         if (!is_file($envFile)) {
             return;
         }
@@ -39,5 +61,10 @@ final class EnvLoader
             $_ENV[$name] = $value;
             $_SERVER[$name] = $value;
         }
+    }
+
+    private static function isAllowedEnvFileName(string $fileName): bool
+    {
+        return (bool) preg_match('/^\.env(\.[a-z0-9-]+)?$/', $fileName);
     }
 }

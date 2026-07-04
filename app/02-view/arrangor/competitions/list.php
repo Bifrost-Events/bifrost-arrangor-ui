@@ -92,9 +92,11 @@ include __DIR__ . '/../_cup-season-context.php';
                     <td><?= $h($eventDate) ?></td>
                     <td><?= $h((string) ($item['location'] ?? '')) ?></td>
                     <td>
-                        <a href="/stevner/<?= $id ?>">Rediger</a>
+                        <a href="/stevner/<?= $id ?>">Oppsett</a>
                         ·
-                        <a href="/stevner/<?= $id ?>/stevneadmin">Stevneadmin</a>
+                        <a href="/stevner/<?= $id ?>/stevneadmin?vis=pameldelse">Påmelding</a>
+                        ·
+                        <a href="/stevner/<?= $id ?>/stevneadmin?vis=gjennomfor">Gjennomføring</a>
                     </td>
                 </tr>
             <?php endforeach; ?>

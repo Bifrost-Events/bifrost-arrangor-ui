@@ -30,6 +30,8 @@ final class LoginController
     public function showForm(): array
     {
         if (Auth::check()) {
+            Auth::refreshFromBackend();
+
             return Response::redirect(Auth::hasOrganizerAccess() ? '/' : '/bli-arrangor');
         }
 
@@ -74,6 +76,7 @@ final class LoginController
         }
 
         Session::setAuth($user);
+        Auth::refreshFromBackend();
 
         return Response::redirect(Auth::hasOrganizerAccess() ? '/' : '/bli-arrangor');
     }

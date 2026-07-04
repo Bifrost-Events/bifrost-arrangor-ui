@@ -21,6 +21,7 @@ final class OnboardingController
             return $redirect;
         }
 
+        Auth::refreshFromBackend();
         if (Auth::hasOrganizerAccess()) {
             return Response::redirect('/');
         }

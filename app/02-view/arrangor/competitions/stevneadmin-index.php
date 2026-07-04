@@ -32,7 +32,7 @@ if (($competitions['ok'] ?? false) && is_array($competitions['data']['competitio
                 <tr>
                     <td><?= $h((string) ($item['name'] ?? '')) ?></td>
                     <td><?= $h((string) ($item['event_date'] ?? '')) ?></td>
-                    <td><a href="/stevner/<?= $id ?>/stevneadmin">Åpne stevneadmin</a></td>
+                    <td><a href="/stevner/<?= $id ?>/stevneadmin?vis=pameldelse">Åpne stevne</a></td>
                 </tr>
             <?php endforeach; ?>
         </tbody>
