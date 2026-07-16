@@ -30,6 +30,13 @@ $action = $is_edit
 </a></p>
 <h1><?= $is_edit ? 'Rediger' : 'Nytt' ?> <?= $h(strtolower($labels->singular('event'))) ?></h1>
 
+<?php if ($is_edit): ?>
+<p style="margin:0 0 1rem;">
+    <a class="btn secondary" href="<?= $h($pp::stevnePameldinger($eventId)) ?>">Påmeldinger</a>
+    <a class="btn secondary" href="<?= $h($pp::stevneJaktfelt($eventId)) ?>">Jaktfelt-grid</a>
+</p>
+<?php endif; ?>
+
 <div class="card" style="max-width:36rem;">
     <form method="post" action="<?= $h($action) ?>">
         <label for="name">Navn *</label>

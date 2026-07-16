@@ -6,6 +6,8 @@ use App\Controller\V3\V3ArrangerController;
 use App\Controller\V3\V3ContextController;
 use App\Controller\V3\V3DashboardController;
 use App\Controller\V3\V3EventController;
+use App\Controller\V3\V3JaktfeltController;
+use App\Controller\V3\V3RegistrationController;
 use App\Controller\V3\V3LoginController;
 use App\Controller\V3\V3SeriesController;
 use App\Controller\V3\V3SpaceController;
@@ -29,6 +31,8 @@ return function (Router $router): void {
     $spaces = new V3SpaceController();
     $series = new V3SeriesController();
     $events = new V3EventController();
+    $registrations = new V3RegistrationController();
+    $jaktfelt = new V3JaktfeltController();
     $arrangers = new V3ArrangerController();
 
     $withSpace = static function (callable $handler): callable {
@@ -99,6 +103,17 @@ return function (Router $router): void {
     $router->get('/stevner/{eventId}', fn (int $eventId) => $events->editForm($eventId));
     $router->post('/stevner/{eventId}', fn (int $eventId) => $events->updateSubmit($eventId));
     $router->post('/stevner/{eventId}/arkiver', fn (int $eventId) => $events->archiveSubmit($eventId));
+    $router->get('/stevner/{eventId}/pameldinger', fn (int $eventId) => $registrations->index($eventId));
+    $router->get('/stevner/{eventId}/pameldinger/ny', fn (int $eventId) => $registrations->createForm($eventId));
+    $router->post('/stevner/{eventId}/pameldinger', fn (int $eventId) => $registrations->createSubmit($eventId));
+    $router->get('/stevner/{eventId}/pameldinger/export', fn (int $eventId) => $registrations->export($eventId));
+    $router->get('/stevner/{eventId}/pameldinger/{registrationId}', fn (int $eventId, int $registrationId) => $registrations->show($eventId, $registrationId));
+    $router->post('/stevner/{eventId}/pameldinger/{registrationId}', fn (int $eventId, int $registrationId) => $registrations->updateSubmit($eventId, $registrationId));
+
+    $router->get('/stevner/{eventId}/jaktfelt', fn (int $eventId) => $jaktfelt->grid($eventId));
+    $router->post('/stevner/{eventId}/jaktfelt', fn (int $eventId) => $jaktfelt->generateSubmit($eventId));
+    $router->post('/stevner/{eventId}/jaktfelt/flytt', fn (int $eventId) => $jaktfelt->moveSubmit($eventId));
+    $router->post('/stevner/{eventId}/jaktfelt/pamelding', fn (int $eventId) => $jaktfelt->registerSubmit($eventId));
 
     // —— Legacy /portal-v3/* → nye paths (GET redirects; POST aliases uten ekstra logikk) ——
     $legacy = PortalPaths::LEGACY_PREFIX;

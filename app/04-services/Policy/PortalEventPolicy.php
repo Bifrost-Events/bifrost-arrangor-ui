@@ -84,9 +84,14 @@ final class PortalEventPolicy
         return $this->canEdit($personId, $event, $activeOrgId);
     }
 
+    /**
+     * Påmeldingsadministrasjon: kun arrangementseiers org_owner/org_admin.
+     * Serieeier uten eierskap får ikke administrere.
+     * event_person_roles er planlagt senere.
+     */
     public function canManageRegistrations(int $personId, array $event, int $activeOrgId): bool
     {
-        return false;
+        return $this->canEdit($personId, $event, $activeOrgId);
     }
 
     public function canManageResults(int $personId, array $event, int $activeOrgId): bool

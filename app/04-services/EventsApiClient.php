@@ -182,6 +182,104 @@ final class EventsApiClient
         return $this->unwrapData($this->post('/api/organizer/events/' . $eventId . '/archive?org_id=' . $orgId, []));
     }
 
+    /** @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>} */
+    public function getJaktfeltSlotGrid(int $orgId, int $eventId): array
+    {
+        return $this->unwrapData($this->get('/api/organizer/jaktfelt/events/' . $eventId . '/slot-grid', ['org_id' => $orgId]));
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     * @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>}
+     */
+    public function putJaktfeltSlotGrid(int $orgId, int $eventId, array $body): array
+    {
+        return $this->unwrapData($this->put('/api/organizer/jaktfelt/events/' . $eventId . '/slot-grid?org_id=' . $orgId, $body));
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     * @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>}
+     */
+    public function moveJaktfeltRegistration(int $orgId, int $registrationId, array $body): array
+    {
+        return $this->unwrapData($this->post(
+            '/api/organizer/jaktfelt/registrations/' . $registrationId . '/move?org_id=' . $orgId,
+            $body
+        ));
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     * @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>}
+     */
+    public function createJaktfeltOrganizerRegistration(int $orgId, int $eventId, array $body): array
+    {
+        return $this->unwrapData($this->post(
+            '/api/organizer/jaktfelt/events/' . $eventId . '/registrations?org_id=' . $orgId,
+            $body
+        ));
+    }
+
+    /**
+     * @param array<string, mixed> $query
+     * @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>}
+     */
+    public function listEventRegistrations(int $orgId, int $eventId, array $query = []): array
+    {
+        $query['org_id'] = $orgId;
+
+        return $this->unwrapData($this->get('/api/organizer/events/' . $eventId . '/registrations', $query));
+    }
+
+    /** @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>} */
+    public function getRegistration(int $orgId, int $registrationId): array
+    {
+        return $this->unwrapData($this->get('/api/organizer/registrations/' . $registrationId, ['org_id' => $orgId]));
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     * @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>, candidates?: list<array<string, mixed>>}
+     */
+    public function createEventRegistration(int $orgId, int $eventId, array $body): array
+    {
+        $raw = $this->request('POST', '/api/organizer/events/' . $eventId . '/registrations?org_id=' . $orgId, $body);
+        $unwrapped = $this->unwrapData($raw);
+        if (!($unwrapped['ok'] ?? false)) {
+            $payload = $raw['data'] ?? null;
+            $candidates = null;
+            if (is_array($payload)) {
+                $candidates = $payload['error']['candidates'] ?? null;
+            }
+            if (is_array($candidates)) {
+                $unwrapped['candidates'] = $candidates;
+            }
+        }
+
+        return $unwrapped;
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     * @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>}
+     */
+    public function updateRegistration(int $orgId, int $registrationId, array $body): array
+    {
+        return $this->unwrapData($this->patch('/api/organizer/registrations/' . $registrationId . '?org_id=' . $orgId, $body));
+    }
+
+    /** @return array{ok: bool, status: int, data: mixed, error: string|null, filename?: string} */
+    public function exportEventRegistrations(int $orgId, int $eventId): array
+    {
+        return $this->unwrapData(
+            $this->get('/api/organizer/events/' . $eventId . '/registrations/export', [
+                'org_id' => $orgId,
+                'format' => 'json',
+            ])
+        );
+    }
+
     /** @param array<string, scalar|null> $query */
     private function get(string $path, array $query = []): array
     {
@@ -366,7 +464,7 @@ final class EventsApiClient
 
     /**
      * @param array{status: int, body: string|false, headers: list<string>} $transport
-     * @return array{ok: bool, status: int, data: array<string, mixed>|null, error: string|null, errors?: array<string, string>}
+     * @return array{ok: bool, status: int, data: array<string, mixed>|string|null, error: string|null, errors?: array<string, string>}
      */
     private function decodeTransport(array $transport): array
     {
@@ -374,6 +472,24 @@ final class EventsApiClient
         $responseBody = $transport['body'];
         if (!is_string($responseBody) || $responseBody === '') {
             return ['ok' => false, 'status' => $status, 'data' => null, 'error' => 'Empty response from events API'];
+        }
+
+        $contentType = '';
+        foreach ($transport['headers'] as $headerLine) {
+            if (stripos($headerLine, 'Content-Type:') === 0) {
+                $contentType = strtolower(trim(substr($headerLine, strlen('Content-Type:'))));
+                break;
+            }
+        }
+        if (str_contains($contentType, 'text/csv')) {
+            $ok = $status >= 200 && $status < 300;
+
+            return [
+                'ok' => $ok,
+                'status' => $status,
+                'data' => $ok ? $responseBody : null,
+                'error' => $ok ? null : ('HTTP ' . $status),
+            ];
         }
 
         try {
@@ -399,6 +515,9 @@ final class EventsApiClient
                     /** @var array<string, string> $fields */
                     $fields = $error['fields'];
                     $result['errors'] = $fields;
+                }
+                if (is_array($error['candidates'] ?? null)) {
+                    $result['data'] = ['error' => $error];
                 }
             } else {
                 $result['error'] = is_string($error) ? $error : 'HTTP ' . $status;

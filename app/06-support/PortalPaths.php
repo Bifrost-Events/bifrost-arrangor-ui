@@ -127,6 +127,31 @@ final class PortalPaths
         return '/stevner/' . $eventId . '/arkiver';
     }
 
+    public static function stevnePameldinger(int $eventId): string
+    {
+        return '/stevner/' . $eventId . '/pameldinger';
+    }
+
+    public static function stevnePameldingNy(int $eventId): string
+    {
+        return '/stevner/' . $eventId . '/pameldinger/ny';
+    }
+
+    public static function stevnePamelding(int $eventId, int $registrationId): string
+    {
+        return '/stevner/' . $eventId . '/pameldinger/' . $registrationId;
+    }
+
+    public static function stevnePameldingerExport(int $eventId): string
+    {
+        return '/stevner/' . $eventId . '/pameldinger/export';
+    }
+
+    public static function stevneJaktfelt(int $eventId): string
+    {
+        return '/stevner/' . $eventId . '/jaktfelt';
+    }
+
     public static function kontekstOrganisasjon(): string
     {
         return '/kontekst/organisasjon';
