@@ -9,6 +9,7 @@
         "psr-4": {
             "App\\Controller\\": "app/03-controller/",
             "App\\Service\\": "app/04-services/",
+            "App\\Repository\\": "app/05-repositories/",
             "App\\Support\\": "app/06-support/"
         }
     },

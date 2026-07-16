@@ -13,10 +13,23 @@ use App\Controller\OrganizationController;
 use App\Controller\ParticipantsController;
 use App\Support\ArrangorMenu;
 use App\Support\ArrangorView;
+use App\Support\PortalV3;
 use App\Support\Router;
 
 return function (array $app): Router {
     $router = new Router();
+
+    // Health er alltid tilgjengelig.
+    $router->get('/health', fn () => (new HealthController())());
+
+    if (PortalV3::isEnabled()) {
+        // V3 er hovedportalen — én URL-flate (se routes/portal-v3.php + PortalPaths).
+        (require dirname(__DIR__) . '/routes/portal-v3.php')($router);
+
+        return $router;
+    }
+
+    // Legacy v2 (kun når ORGANIZER_PORTAL_V3_ENABLED=false).
     $login = new LoginController();
     $onboarding = new OnboardingController();
     $competitions = new CompetitionsController();
@@ -28,7 +41,6 @@ return function (array $app): Router {
     $router->get('/login', fn () => $login->showForm());
     $router->post('/login', fn () => $login->submit());
     $router->post('/logout', fn () => $login->logout());
-    $router->get('/health', fn () => (new HealthController())());
     $router->get('/', fn () => (new DashboardController())());
 
     $router->get('/bli-arrangor', fn () => $onboarding->index());

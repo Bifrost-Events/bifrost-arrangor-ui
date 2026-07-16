@@ -1,0 +1,97 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use App\Service\PortalV3SmokeTest;
+use App\Support\Router;
+
+$args = $argv;
+array_shift($args);
+$command = $args[0] ?? '';
+
+switch ($command) {
+    case 'smoke-test':
+        require dirname(__DIR__) . '/app/06-support/bootstrap.php';
+        portal_v3_console_enable();
+        console_smoke_test();
+        exit(0);
+    case 'check-v2-routes':
+        require dirname(__DIR__) . '/app/06-support/bootstrap.php';
+        portal_v3_console_enable();
+        console_check_v2_routes();
+        exit(0);
+    case 'check-seed':
+        require __DIR__ . '/check-seed.php';
+        exit(0);
+    case '':
+        echo "Tilgjengelige kommandoer:\n";
+        echo "  smoke-test        — Portal policy- og API-dataflyt\n";
+        echo "  check-v2-routes   — Verifiser portal-ruter (inkl. legacy redirects)\n";
+        echo "  check-seed        — Vis antall rader i seed-tabeller\n";
+        exit(0);
+    default:
+        fwrite(STDERR, "Ukjent kommando: $command\n");
+        exit(1);
+}
+
+function portal_v3_console_enable(): void
+{
+    \App\Support\Config::load('v3');
+    \App\Support\Config::load('events');
+}
+
+function console_smoke_test(): void
+{
+    echo "Kjører Portal V3 smoke-test …\n\n";
+    try {
+        $lines = (new PortalV3SmokeTest())->run();
+        foreach ($lines as $line) {
+            echo $line . "\n";
+        }
+    } catch (Throwable $e) {
+        fwrite(STDERR, 'FEIL: ' . $e->getMessage() . "\n");
+        exit(1);
+    }
+}
+
+function console_check_v2_routes(): void
+{
+    echo "Sjekker portal-ruter …\n\n";
+    $app = ['basePath' => dirname(__DIR__)];
+    $register = require dirname(__DIR__) . '/routes/web.php';
+    $router = $register($app);
+
+    if (!$router instanceof Router) {
+        fwrite(STDERR, "FEIL: web.php returnerte ikke Router\n");
+        exit(1);
+    }
+
+    $required = [
+        '/',
+        '/health',
+        '/login',
+        '/oversikt',
+        '/cup',
+        '/sesonger',
+        '/arrangorer',
+        '/stevner',
+        '/portal-v3',
+        '/portal-v3/login',
+        '/portal-v3/spaces',
+    ];
+    $missing = [];
+    foreach ($required as $path) {
+        if (!$router->hasRoute('GET', $path)) {
+            $missing[] = $path;
+        }
+    }
+
+    if ($missing !== []) {
+        fwrite(STDERR, 'FEIL: Mangler ruter: ' . implode(', ', $missing) . "\n");
+        exit(1);
+    }
+
+    echo "OK: portal-ruter /, /oversikt, /cup, /sesonger, /arrangorer, /stevner, /login (+ legacy /portal-v3)\n";
+    echo "Alle rute-sjekker bestått.\n";
+}

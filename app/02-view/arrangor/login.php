@@ -6,6 +6,7 @@ declare(strict_types=1);
 /** @var string $error */
 /** @var string $public_register_url */
 /** @var array{resolved: bool, cup_name: string, season_label: string, host: string, error: string|null} $portal */
+/** @var array<string, mixed> $cup_brand */
 
 $h = static fn (string $s): string => htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $error = $error ?? '';
@@ -17,6 +18,11 @@ $portal = is_array($portal ?? null) ? $portal : [
     'host' => '',
     'error' => null,
 ];
+$brand = is_array($cup_brand ?? null) ? $cup_brand : [];
+$primary = (string) ($brand['primary_color'] ?? '#2c5530');
+$headerBg = (string) ($brand['header_bg'] ?? $primary);
+$accentSoft = (string) ($brand['accent_color'] ?? '#e8f0e9');
+$logoUrl = trim((string) ($brand['logo_url'] ?? ''));
 $cupName = trim((string) ($portal['cup_name'] ?? ''));
 $seasonLabel = trim((string) ($portal['season_label'] ?? ''));
 $pageTitle = $cupName !== '' ? $cupName . ' – Arrangør' : 'Bifrost Arrangør';
@@ -29,15 +35,25 @@ $pageTitle = $cupName !== '' ? $cupName . ' – Arrangør' : 'Bifrost Arrangør'
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= $h($title) ?> – <?= $h($pageTitle) ?></title>
     <style>
-        :root { --bg: #f4f4f2; --ink: #1a1a18; --muted: #5c5c58; --line: #d8d8d4; --accent: #2c5530; --bad: #9b2c2c; }
+        :root {
+            --bg: #f4f4f2;
+            --ink: #1a1a18;
+            --muted: #5c5c58;
+            --line: #d8d8d4;
+            --accent: <?= $h($primary) ?>;
+            --header: <?= $h($headerBg) ?>;
+            --accent-soft: <?= $h($accentSoft) ?>;
+            --bad: #9b2c2c;
+        }
         * { box-sizing: border-box; }
         body { margin: 0; font-family: system-ui, Segoe UI, Roboto, sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.25rem; }
         .login-card { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 1.5rem; width: 100%; max-width: 420px; }
+        .login-logo { display: block; max-width: 180px; max-height: 72px; width: auto; height: auto; object-fit: contain; margin: 0 0 1rem; }
         h1 { margin: 0 0 0.35rem; font-size: 1.25rem; }
         .login-subtitle { color: var(--muted); font-size: 0.9rem; margin: 0 0 1rem; }
         .portal-context {
-            margin: 0 0 1rem; padding: 0.65rem 0.75rem; background: #f4f7f4;
-            border: 1px solid #d8e3da; border-radius: 6px; font-size: 0.9rem;
+            margin: 0 0 1rem; padding: 0.65rem 0.75rem; background: var(--accent-soft);
+            border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 6px; font-size: 0.9rem;
         }
         .portal-context__row { display: flex; gap: 0.4rem; align-items: baseline; margin: 0.15rem 0; }
         .portal-context__label {
@@ -55,6 +71,9 @@ $pageTitle = $cupName !== '' ? $cupName . ' – Arrangør' : 'Bifrost Arrangør'
 </head>
 <body>
     <div class="login-card">
+        <?php if ($logoUrl !== ''): ?>
+            <img class="login-logo" src="<?= $h($logoUrl) ?>" alt="<?= $h($cupName !== '' ? $cupName : 'Cup-logo') ?>">
+        <?php endif; ?>
         <h1><?= $h($pageTitle) ?></h1>
         <p class="login-subtitle">Arrangørportal<?= $cupName !== '' ? ' for ' . $h($cupName) : '' ?>. Logg inn med Bifrost-kontoen din.</p>
 

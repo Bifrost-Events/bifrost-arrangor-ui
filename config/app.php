@@ -15,4 +15,7 @@ return [
     'debug' => ($_ENV['APP_DEBUG'] ?? 'false') === 'true',
     'public_register_url' => rtrim((string) $_ENV['PUBLIC_REGISTER_URL'], '/'),
     'arrangor_portal_url' => rtrim((string) $_ENV['ARRANGOR_PORTAL_URL'], '/'),
+    // Valgfritt — override sti/URL til public-ui brand (JSON + logo-assets)
+    'public_ui_path' => rtrim((string) ($_ENV['PUBLIC_UI_PATH'] ?? ''), '/\\'),
+    'public_site_url' => rtrim((string) ($_ENV['PUBLIC_SITE_URL'] ?? ''), '/'),
 ];

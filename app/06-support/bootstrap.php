@@ -23,6 +23,9 @@ if (\App\Support\Environment::isDevelopment() || (($_ENV['APP_DEBUG'] ?? 'false'
 
 \App\Support\Config::load('app');
 \App\Support\Config::load('backend');
+\App\Support\Config::load('database');
+\App\Support\Config::load('events');
+\App\Support\Config::load('v3');
 
 return [
     'basePath' => $basePath,

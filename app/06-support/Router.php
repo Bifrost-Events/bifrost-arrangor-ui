@@ -24,6 +24,11 @@ class Router
         return $this->add('PUT', $path, $handler);
     }
 
+    public function patch(string $path, callable $handler): self
+    {
+        return $this->add('PATCH', $path, $handler);
+    }
+
     public function delete(string $path, callable $handler): self
     {
         return $this->add('DELETE', $path, $handler);
@@ -34,6 +39,11 @@ class Router
         $this->routes[$method][$path] = $handler;
 
         return $this;
+    }
+
+    public function hasRoute(string $method, string $path): bool
+    {
+        return isset($this->routes[$method][$path]);
     }
 
     /**

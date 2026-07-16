@@ -7,6 +7,8 @@ namespace App\Support;
 final class Session
 {
     private const AUTH_KEY = 'bifrost_arrangor_auth';
+    /** Synkronisert admin-auth for intern organizer API (V3). */
+    public const ADMIN_AUTH_BRIDGE_KEY = 'bifrost_admin_auth';
     private const ORG_KEY = 'bifrost_arrangor_org_id';
     private const SEASON_KEY = 'bifrost_arrangor_season_id';
     private const BACKEND_COOKIE_KEY = 'bifrost_backend_cookie';
@@ -38,6 +40,10 @@ final class Session
     {
         self::startRequired();
         $auth = $_SESSION[self::AUTH_KEY] ?? null;
+        if (!is_array($auth)) {
+            $bridged = $_SESSION[self::ADMIN_AUTH_BRIDGE_KEY] ?? null;
+            $auth = is_array($bridged) ? $bridged : null;
+        }
 
         return is_array($auth) ? $auth : null;
     }
