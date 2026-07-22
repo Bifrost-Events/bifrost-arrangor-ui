@@ -699,7 +699,12 @@ final class V3EventController
             return $structure === '' || $structure === 'rounds';
         }
 
-        return (string) ($series['structure_type'] ?? '') === 'events';
+        return (string) ($series['structure_type'] ?? '') === 'events'
+            || (string) ($series['structure_type'] ?? '') === ''
+            || (
+                (string) ($series['structure_type'] ?? '') === 'rounds'
+                && $services->spaceParticipation->listChildSeriesByParentId((int) ($series['series_id'] ?? 0)) === []
+            );
     }
 
     /**
@@ -730,12 +735,17 @@ final class V3EventController
         }
 
         if ($parentId === 0 && $structure === 'rounds') {
-            PortalV3Session::setFlash(
-                'error',
-                'Ved rundestruktur opprettes stevner under en runde, ikke direkte i sesongen.',
-            );
+            $services = new PortalV3Services();
+            $children = $services->spaceParticipation->listChildSeriesByParentId($seriesId);
+            if ($children !== []) {
+                PortalV3Session::setFlash(
+                    'error',
+                    'Ved rundestruktur opprettes stevner under en runde, ikke direkte i sesongen.',
+                );
 
-            return Response::redirect($fallback);
+                return Response::redirect($fallback);
+            }
+            // Ingen runder opprettet ennå — tillat stevne direkte på sesongrot.
         }
 
         PortalV3Session::setFlash('error', 'Kan ikke opprette stevne her ut fra sesongstrukturen.');

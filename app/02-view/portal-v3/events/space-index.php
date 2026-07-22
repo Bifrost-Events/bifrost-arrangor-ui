@@ -236,9 +236,17 @@ $renderEventTiles = static function (array $blockEvents) use ($h, $pp, $statusLa
                 <?php endforeach; ?>
             <?php elseif ($blockEvents === []): ?>
                 <p class="season-block-empty">Ingen stevner i denne sesongen ennå.</p>
+                <?php
+                $emptyHint = isset($block['empty_hint']) && is_string($block['empty_hint'])
+                    ? trim($block['empty_hint'])
+                    : '';
+                ?>
+                <?php if ($emptyHint !== ''): ?>
+                    <p class="muted"><?= $h($emptyHint) ?></p>
+                <?php endif; ?>
                 <?php if ($createHref !== null): ?>
                     <p style="margin-bottom:0;">
-                        <a href="<?= $h($createHref) ?>">Opprett første stevne</a>
+                        <a class="btn" href="<?= $h($createHref) ?>">Opprett første stevne</a>
                     </p>
                 <?php endif; ?>
             <?php else: ?>
