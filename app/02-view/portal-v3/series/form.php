@@ -24,9 +24,25 @@ if ($is_edit) {
 } else {
     $action = $pp::sesonger();
 }
+
+$toDateInput = static function (mixed $value): string {
+    $raw = trim((string) ($value ?? ''));
+    if ($raw === '') {
+        return '';
+    }
+    if (preg_match('/^(\d{4}-\d{2}-\d{2})/', $raw, $m)) {
+        return $m[1];
+    }
+    $ts = strtotime($raw);
+
+    return $ts !== false ? date('Y-m-d', $ts) : '';
+};
+$startsOn = $toDateInput($series['starts_at'] ?? null);
+$endsOn = $toDateInput($series['ends_at'] ?? null);
+$entityLabel = $is_child ? $labels->singular('subseries') : $labels->singular('series');
 ?>
 <p><a href="<?= $h($pp::cup()) ?>">← <?= $h((string) ($space['name'] ?? '')) ?></a></p>
-<h1><?= $is_edit ? 'Rediger' : 'Ny' ?> <?= $h($is_child ? $labels->singular('subseries') : $labels->singular('series')) ?></h1>
+<h1><?= $is_edit ? 'Rediger' : 'Ny' ?> <?= $h($entityLabel) ?></h1>
 
 <?php if ($showTabs && $is_edit): ?>
     <?php
@@ -45,8 +61,28 @@ if ($is_edit) {
         <label for="short_name">Kortnavn</label>
         <input type="text" id="short_name" name="short_name" value="<?= $h((string) ($series['short_name'] ?? '')) ?>">
 
-        <label for="season_label">Sesong/år</label>
-        <input type="text" id="season_label" name="season_label" value="<?= $h((string) ($series['season_label'] ?? '')) ?>">
+        <?php if (!$is_child): ?>
+            <label for="season_label">Sesong/år</label>
+            <input type="text" id="season_label" name="season_label" value="<?= $h((string) ($series['season_label'] ?? '')) ?>">
+        <?php endif; ?>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:.75rem;">
+            <div>
+                <label for="starts_on">Fra dato</label>
+                <input type="date" id="starts_on" name="starts_on" value="<?= $h($startsOn) ?>">
+            </div>
+            <div>
+                <label for="ends_on">Til dato</label>
+                <input type="date" id="ends_on" name="ends_on" value="<?= $h($endsOn) ?>">
+            </div>
+        </div>
+        <p class="muted" style="margin-top:.35rem;">
+            <?php if ($is_child): ?>
+                Stevnedatoer i denne <?= $h(strtolower($labels->singular('subseries'))) ?> bør ligge innenfor intervallet.
+            <?php else: ?>
+                Perioden for <?= $h(strtolower($labels->singular('series'))) ?>. Runder bør ligge innenfor dette intervallet.
+            <?php endif; ?>
+        </p>
 
         <label for="sort_order">Rekkefølge</label>
         <input type="number" id="sort_order" name="sort_order" min="0" value="<?= $h((string) ($series['sort_order'] ?? '')) ?>">

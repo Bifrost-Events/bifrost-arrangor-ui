@@ -28,7 +28,7 @@ final class V3DashboardController
         $personId = PortalV3Auth::personId() ?? 0;
         $orgs = $services->organizationContext->administrableOrganizations($personId);
         if ($orgs === []) {
-            return PortalV3View::render('no-access', [], 'Ingen tilgang');
+            return Response::redirect(PortalPaths::komIGang());
         }
 
         $bound = (new PortalBoundCup($services))->resolve($personId);

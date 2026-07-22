@@ -82,6 +82,11 @@ final class PortalPaths
         return '/sesonger/' . $parentId . '/undersoner/ny';
     }
 
+    public static function sesongRoundsMatrix(int $seasonRootId): string
+    {
+        return '/sesonger/' . $seasonRootId . '/runder';
+    }
+
     public static function sesongChildren(int $parentId): string
     {
         return '/sesonger/' . $parentId . '/undersoner';
@@ -95,6 +100,11 @@ final class PortalPaths
     public static function sesongStevneNew(int $seriesId): string
     {
         return '/sesonger/' . $seriesId . '/stevner/ny';
+    }
+
+    public static function sesongStevnerBatch(int $seasonRootId): string
+    {
+        return '/sesonger/' . $seasonRootId . '/stevner/batch';
     }
 
     public static function arrangorer(): string
@@ -172,6 +182,51 @@ final class PortalPaths
         return '/kontekst/arbeidsomrade';
     }
 
+    public static function komIGang(): string
+    {
+        return '/kom-i-gang';
+    }
+
+    public static function mineOrganisasjoner(): string
+    {
+        return '/mine-organisasjoner';
+    }
+
+    public static function mineOrganisasjonerNy(): string
+    {
+        return '/mine-organisasjoner/ny';
+    }
+
+    public static function arrangorSoknader(): string
+    {
+        return '/arrangor-soknader';
+    }
+
+    public static function arrangorSoknad(int $id): string
+    {
+        return '/arrangor-soknader/' . $id;
+    }
+
+    public static function arrangorSoknadNy(): string
+    {
+        return '/arrangor-soknader/ny';
+    }
+
+    public static function serieSoknader(int $seriesId): string
+    {
+        return '/sesonger/' . $seriesId . '/arrangor-soknader';
+    }
+
+    public static function serieSoknad(int $seriesId, int $id): string
+    {
+        return '/sesonger/' . $seriesId . '/arrangor-soknader/' . $id;
+    }
+
+    public static function serieSoknadInnstillinger(int $seriesId): string
+    {
+        return '/sesonger/' . $seriesId . '/arrangor-soknader/innstillinger';
+    }
+
     /** Alias for eldre kode som forventet «prefix + path». */
     public static function routePrefix(): string
     {
@@ -191,6 +246,7 @@ final class PortalPaths
         $roots = [
             '/oversikt', '/login', '/logout', '/cups', '/cup', '/sesonger',
             '/arrangorer', '/stevner', '/kontekst',
+            '/kom-i-gang', '/mine-organisasjoner', '/arrangor-soknader',
         ];
         foreach ($roots as $root) {
             if ($path === $root || str_starts_with($path, $root . '/')) {

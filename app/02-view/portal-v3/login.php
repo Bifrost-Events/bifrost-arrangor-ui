@@ -15,4 +15,8 @@ $h = static fn (string $s): string => htmlspecialchars($s, ENT_QUOTES | ENT_SUBS
         <input type="password" id="password" name="password" required autocomplete="current-password">
         <p style="margin-top:1rem;"><button type="submit" class="btn">Logg inn</button></p>
     </form>
+    <p class="muted" style="margin-top:1.25rem; text-align:center;">
+        Ny arrangør uten konto?<br>
+        <a href="<?= $h($pp::komIGang()) ?>"><strong>Kom i gang</strong></a>
+    </p>
 </div>

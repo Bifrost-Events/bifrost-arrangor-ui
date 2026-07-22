@@ -12,6 +12,7 @@ declare(strict_types=1);
 /** @var string $season_label */
 /** @var bool $is_arranger_view */
 /** @var string $arranger_name */
+/** @var list<array<string, mixed>> $season_blocks */
 /** @var \App\Service\PortalEventTerminology $labels */
 
 $h = static fn (string $s): string => htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -21,15 +22,7 @@ $seasonLabel = trim((string) ($season_label ?? ''));
 $filterSeason = (string) ($filter_season_scope ?? 'selected');
 $isArrangerView = (bool) ($is_arranger_view ?? false);
 $arrangerName = trim((string) ($arranger_name ?? ''));
-$linkedSeasons = [];
-foreach ($events as $event) {
-    $sn = trim((string) ($event['season_name'] ?? ''));
-    if ($sn !== '') {
-        $linkedSeasons[$sn] = true;
-    }
-}
-$linkedSeasons = array_keys($linkedSeasons);
-sort($linkedSeasons, SORT_STRING);
+$seasonBlocks = is_array($season_blocks ?? null) ? $season_blocks : [];
 
 $statusLabel = static function (string $status): string {
     return match ($status) {
@@ -40,6 +33,31 @@ $statusLabel = static function (string $status): string {
         default => $status !== '' ? $status : '—',
     };
 };
+
+$renderEventTiles = static function (array $blockEvents) use ($h, $pp, $statusLabel): void {
+    if ($blockEvents === []) {
+        return;
+    }
+    echo '<div class="event-tiles">';
+    foreach ($blockEvents as $event) {
+        $eid = (int) ($event['event_id'] ?? 0);
+        $ename = (string) ($event['name'] ?? 'Stevne');
+        $estart = trim((string) ($event['starts_at'] ?? ''));
+        $estatus = $statusLabel((string) ($event['status'] ?? ''));
+        echo '<article class="event-tile">';
+        echo '<a class="event-tile-title" href="' . $h($pp::stevne($eid)) . '">' . $h($ename) . '</a>';
+        if ($estart !== '') {
+            echo '<span class="event-tile-meta">' . $h($estart) . '</span>';
+        }
+        echo '<span class="event-tile-status">' . $h($estatus) . '</span>';
+        echo '<div class="event-tile-actions">';
+        echo '<a href="' . $h($pp::stevne($eid)) . '">Åpne</a>';
+        echo '<a href="' . $h($pp::stevnePameldinger($eid)) . '">Påmeldinger</a>';
+        echo '<a href="' . $h($pp::stevneJaktfelt($eid)) . '">Jaktfelt</a>';
+        echo '</div></article>';
+    }
+    echo '</div>';
+};
 ?>
 <?php if ($isArrangerView): ?>
 <style>
@@ -47,45 +65,112 @@ $statusLabel = static function (string $status): string {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
         gap: 1rem;
-        margin-top: 1rem;
+        margin-top: .75rem;
     }
-    a.event-tile {
+    .event-tile {
         display: flex;
         flex-direction: column;
         gap: .35rem;
-        background: var(--card, #fff);
+        background: #f7f8f6;
         border-radius: 8px;
         padding: 1.1rem 1.2rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,.08);
-        text-decoration: none;
-        color: inherit;
         border: 1px solid transparent;
-        transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
         min-height: 7.5rem;
     }
-    a.event-tile:hover {
+    .event-tile:hover {
         border-color: var(--accent, #3d6b47);
-        box-shadow: 0 4px 14px rgba(0,0,0,.1);
-        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(0,0,0,.08);
     }
-    a.event-tile .event-tile-title {
+    .event-tile .event-tile-title {
         font-size: 1.05rem;
         font-weight: 700;
         line-height: 1.3;
         color: var(--ink, #1a1a18);
+        text-decoration: none;
     }
-    a.event-tile .event-tile-meta {
+    .event-tile .event-tile-title:hover { color: var(--accent, #3d6b47); }
+    .event-tile .event-tile-meta {
         font-size: .85rem;
         color: var(--muted, #5c635c);
     }
-    a.event-tile .event-tile-status {
-        margin-top: auto;
+    .event-tile .event-tile-status {
         font-size: .78rem;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: .04em;
         color: var(--accent, #3d6b47);
     }
+    .event-tile .event-tile-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .35rem;
+        margin-top: auto;
+        padding-top: .55rem;
+    }
+    .event-tile .event-tile-actions a {
+        font-size: .82rem;
+        font-weight: 600;
+        text-decoration: none;
+        color: var(--accent, #3d6b47);
+        padding: .2rem .45rem;
+        border-radius: 4px;
+        background: #eef4ef;
+    }
+    .event-tile .event-tile-actions a:hover {
+        background: #dfeadf;
+    }
+    .season-block {
+        margin-top: 1.5rem;
+        padding: 1.15rem 1.25rem 1.25rem;
+        background: var(--card, #fff);
+        border-radius: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    }
+    .season-block:first-of-type { margin-top: 1rem; }
+    .season-block-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+        margin-bottom: .25rem;
+    }
+    .season-block-header h2 {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+    .season-block-empty {
+        margin: .75rem 0 0;
+        color: var(--muted, #5c635c);
+    }
+    .round-block {
+        margin-top: 1.1rem;
+        padding-top: .85rem;
+        border-top: 1px solid #e6e8e4;
+    }
+    .round-block:first-of-type {
+        margin-top: .85rem;
+    }
+    .round-block-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: .5rem;
+    }
+    .round-block-header h3 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 650;
+    }
+    .round-block-header a.btn-link {
+        font-size: .88rem;
+        font-weight: 600;
+        color: var(--accent, #3d6b47);
+        text-decoration: none;
+    }
+    .round-block-header a.btn-link:hover { text-decoration: underline; }
 </style>
 
 <h1><?= $h($labels->plural('event')) ?></h1>
@@ -96,38 +181,71 @@ $statusLabel = static function (string $status): string {
         Dine stevner i <?= $h((string) ($space['name'] ?? 'cupen')) ?>
     <?php endif; ?>.
 </p>
-<?php if ($linkedSeasons !== []): ?>
-    <p class="muted" style="margin-top:-.5rem;">
-        Sesonger: <strong><?= $h(implode(', ', $linkedSeasons)) ?></strong>
-    </p>
-<?php endif; ?>
 
-<?php if ($events === []): ?>
-    <div class="card">
-        <p>Ingen stevner for denne arrangøren i cupen ennå.</p>
+<?php if ($seasonBlocks === []): ?>
+    <div class="card" style="margin-top:1rem;">
+        <p style="margin-top:0;">Ingen sesong tilgjengelig for denne arrangøren ennå.</p>
+        <p class="muted">Når du er godkjent for en sesong, dukker den opp her med mulighet til å opprette stevne.</p>
     </div>
 <?php else: ?>
-    <div class="event-tiles">
-        <?php foreach ($events as $event): ?>
-            <?php
-            $eid = (int) ($event['event_id'] ?? 0);
-            $ename = (string) ($event['name'] ?? 'Stevne');
-            $eseason = trim((string) ($event['season_name'] ?? ''));
-            $estart = trim((string) ($event['starts_at'] ?? ''));
-            $estatus = $statusLabel((string) ($event['status'] ?? ''));
-            ?>
-            <a class="event-tile" href="<?= $h($pp::stevne($eid)) ?>">
-                <span class="event-tile-title"><?= $h($ename) ?></span>
-                <?php if ($eseason !== ''): ?>
-                    <span class="event-tile-meta"><?= $h($eseason) ?></span>
+    <?php foreach ($seasonBlocks as $block): ?>
+        <?php
+        $blockLabel = trim((string) ($block['label'] ?? 'Sesong'));
+        $blockEvents = is_array($block['events'] ?? null) ? $block['events'] : [];
+        $rounds = is_array($block['rounds'] ?? null) ? $block['rounds'] : [];
+        $createHref = isset($block['create_href']) && is_string($block['create_href']) && $block['create_href'] !== ''
+            ? $block['create_href']
+            : null;
+        $createBatchHref = isset($block['create_batch_href']) && is_string($block['create_batch_href']) && $block['create_batch_href'] !== ''
+            ? $block['create_batch_href']
+            : null;
+        $hasRounds = $rounds !== [];
+        ?>
+        <section class="season-block" aria-label="<?= $h($blockLabel) ?>">
+            <div class="season-block-header">
+                <h2><?= $h($blockLabel) ?></h2>
+                <?php if ($createBatchHref !== null): ?>
+                    <a class="btn" href="<?= $h($createBatchHref) ?>">Opprett stevner</a>
+                <?php elseif ($createHref !== null): ?>
+                    <a class="btn" href="<?= $h($createHref) ?>">Opprett stevne</a>
                 <?php endif; ?>
-                <?php if ($estart !== ''): ?>
-                    <span class="event-tile-meta"><?= $h($estart) ?></span>
+            </div>
+
+            <?php if ($hasRounds): ?>
+                <?php foreach ($rounds as $round): ?>
+                    <?php
+                    $roundLabel = trim((string) ($round['label'] ?? 'Runde'));
+                    $roundEvents = is_array($round['events'] ?? null) ? $round['events'] : [];
+                    $roundCreate = isset($round['create_href']) && is_string($round['create_href']) && $round['create_href'] !== ''
+                        ? $round['create_href']
+                        : null;
+                    ?>
+                    <div class="round-block">
+                        <div class="round-block-header">
+                            <h3><?= $h($roundLabel) ?></h3>
+                            <?php if ($roundCreate !== null): ?>
+                                <a class="btn-link" href="<?= $h($roundCreate) ?>">Opprett for denne runden</a>
+                            <?php endif; ?>
+                        </div>
+                        <?php if ($roundEvents === []): ?>
+                            <p class="season-block-empty">Ingen stevner i denne runden ennå.</p>
+                        <?php else: ?>
+                            <?php $renderEventTiles($roundEvents); ?>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+            <?php elseif ($blockEvents === []): ?>
+                <p class="season-block-empty">Ingen stevner i denne sesongen ennå.</p>
+                <?php if ($createHref !== null): ?>
+                    <p style="margin-bottom:0;">
+                        <a href="<?= $h($createHref) ?>">Opprett første stevne</a>
+                    </p>
                 <?php endif; ?>
-                <span class="event-tile-status"><?= $h($estatus) ?></span>
-            </a>
-        <?php endforeach; ?>
-    </div>
+            <?php else: ?>
+                <?php $renderEventTiles($blockEvents); ?>
+            <?php endif; ?>
+        </section>
+    <?php endforeach; ?>
 <?php endif; ?>
 
 <?php else: ?>
@@ -204,7 +322,7 @@ $statusLabel = static function (string $status): string {
                     <td><?= $h((string) ($event['name'] ?? '')) ?></td>
                     <td class="muted"><?= $h((string) ($event['season_name'] ?? '—')) ?></td>
                     <td class="muted"><?= $h((string) ($event['owner_org_name'] ?? '')) ?></td>
-                    <td><?= $h((string) ($event['status'] ?? '')) ?></td>
+                    <td><?= $h($statusLabel((string) ($event['status'] ?? ''))) ?></td>
                     <td><?= $h((string) ($event['starts_at'] ?? '')) ?></td>
                     <td>
                         <a class="btn" href="<?= $h($pp::stevne((int) ($event['event_id'] ?? 0))) ?>">

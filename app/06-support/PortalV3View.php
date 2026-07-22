@@ -73,11 +73,6 @@ final class PortalV3View
         }
         $menuAccess = (new PortalWorkContext($services))->menuAccess($access, $work);
 
-        $currentPath = (string) (parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '');
-        $menu = $personId > 0
-            ? PortalV3Menu::build($labels, $activeSpace, $currentPath, $domainBound, $menuAccess)
-            : [];
-
         $seasonLabel = (string) ($bound['season_label'] ?? '');
         if ($seasonLabel === '' && is_array($bound['season'] ?? null)) {
             $seasonLabel = (string) (($bound['season']['name'] ?? $bound['season']['season_label'] ?? ''));
@@ -85,6 +80,19 @@ final class PortalV3View
         $seasonOptions = is_array($bound['season_options'] ?? null) ? $bound['season_options'] : [];
         $seasonSeriesId = isset($bound['season_series_id']) ? (int) $bound['season_series_id'] : 0;
         $activeSeason = is_array($bound['season'] ?? null) ? $bound['season'] : null;
+
+        $currentPath = (string) (parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '');
+        $menu = $personId > 0
+            ? PortalV3Menu::build(
+                $labels,
+                $activeSpace,
+                $currentPath,
+                $domainBound,
+                $menuAccess,
+                $seasonSeriesId,
+            )
+            : [];
+        $accountLinks = $personId > 0 ? PortalV3Menu::accountLinks() : [];
 
         $layout = [
             'title' => $title,
@@ -98,6 +106,7 @@ final class PortalV3View
             'route_prefix' => PortalPaths::routePrefix(),
             'pp' => PortalPaths::class,
             'menu' => $menu,
+            'account_links' => $accountLinks,
             'domain_bound' => $domainBound,
             'cup_brand' => $brand,
             'season_label' => $seasonLabel,

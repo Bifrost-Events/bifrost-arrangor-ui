@@ -7,6 +7,7 @@ use App\Controller\V3\V3ContextController;
 use App\Controller\V3\V3DashboardController;
 use App\Controller\V3\V3EventController;
 use App\Controller\V3\V3JaktfeltController;
+use App\Controller\V3\V3OnboardingController;
 use App\Controller\V3\V3RegistrationController;
 use App\Controller\V3\V3LoginController;
 use App\Controller\V3\V3SeriesController;
@@ -34,6 +35,7 @@ return function (Router $router): void {
     $registrations = new V3RegistrationController();
     $jaktfelt = new V3JaktfeltController();
     $arrangers = new V3ArrangerController();
+    $onboarding = new V3OnboardingController();
 
     $withSpace = static function (callable $handler): callable {
         return static function (mixed ...$extra) use ($handler) {
@@ -87,6 +89,7 @@ return function (Router $router): void {
     $router->post(PortalPaths::sesonger(), $withSpace(fn (int $spaceId) => $series->createRootSubmit($spaceId)));
     $router->get('/sesonger/{parentId}/undersoner/ny', $withSpace(fn (int $spaceId, int $parentId) => $series->createChildForm($spaceId, $parentId)));
     $router->post('/sesonger/{parentId}/undersoner', $withSpace(fn (int $spaceId, int $parentId) => $series->createChildSubmit($spaceId, $parentId)));
+    $router->post('/sesonger/{seriesId}/runder', fn (int $seriesId) => $series->roundsMatrixSubmit($seriesId));
     $router->get('/sesonger/{seriesId}/rediger', fn (int $seriesId) => $series->editForm($seriesId));
     $router->post('/sesonger/{seriesId}/rediger', fn (int $seriesId) => $series->editSubmit($seriesId));
     $router->get('/sesonger/{seriesId}/struktur', fn (int $seriesId) => $series->structureForm($seriesId));
@@ -98,6 +101,8 @@ return function (Router $router): void {
 
     $router->get('/sesonger/{seriesId}/stevner', $withSpace(fn (int $spaceId, int $seriesId) => $events->index($spaceId, $seriesId)));
     $router->get('/sesonger/{seriesId}/stevner/ny', $withSpace(fn (int $spaceId, int $seriesId) => $events->createForm($spaceId, $seriesId)));
+    $router->get('/sesonger/{seriesId}/stevner/batch', $withSpace(fn (int $spaceId, int $seriesId) => $events->batchCreateForm($spaceId, $seriesId)));
+    $router->post('/sesonger/{seriesId}/stevner/batch', $withSpace(fn (int $spaceId, int $seriesId) => $events->batchCreateSubmit($spaceId, $seriesId)));
     $router->post('/sesonger/{seriesId}/stevner', $withSpace(fn (int $spaceId, int $seriesId) => $events->createSubmit($spaceId, $seriesId)));
 
     $router->get('/stevner/{eventId}', fn (int $eventId) => $events->editForm($eventId));
@@ -114,6 +119,28 @@ return function (Router $router): void {
     $router->post('/stevner/{eventId}/jaktfelt', fn (int $eventId) => $jaktfelt->generateSubmit($eventId));
     $router->post('/stevner/{eventId}/jaktfelt/flytt', fn (int $eventId) => $jaktfelt->moveSubmit($eventId));
     $router->post('/stevner/{eventId}/jaktfelt/pamelding', fn (int $eventId) => $jaktfelt->registerSubmit($eventId));
+
+    // —— Onboarding / org self-service ——
+    // /kom-i-gang er åpen for gjester (kontoopprettelse) og innloggede
+    $router->get(PortalPaths::komIGang(), fn () => $onboarding->getStarted());
+    $router->post(PortalPaths::komIGang(), fn () => $onboarding->registerSubmit());
+    $router->get(PortalPaths::mineOrganisasjoner(), fn () => $onboarding->listOrganizations());
+    $router->get(PortalPaths::mineOrganisasjonerNy(), fn () => $onboarding->createOrgForm());
+    $router->post(PortalPaths::mineOrganisasjonerNy(), fn () => $onboarding->createOrgSubmit());
+    $router->get(PortalPaths::arrangorSoknader(), fn () => $onboarding->listApplications());
+    $router->get(PortalPaths::arrangorSoknadNy(), fn () => $onboarding->newApplicationForm());
+    $router->post(PortalPaths::arrangorSoknadNy(), fn () => $onboarding->createApplicationSubmit());
+    $router->get('/arrangor-soknader/{id}', fn (int $id) => $onboarding->showApplication($id));
+    $router->post('/arrangor-soknader/{id}/send-inn', fn (int $id) => $onboarding->submitApplication($id));
+    $router->post('/arrangor-soknader/{id}/trekk', fn (int $id) => $onboarding->withdrawApplication($id));
+
+    // —— Serieeier: behandle søknader ——
+    $router->get('/sesonger/{seriesId}/arrangor-soknader', fn (int $seriesId) => $onboarding->listSeriesApplications($seriesId));
+    $router->post('/sesonger/{seriesId}/arrangor-soknader/innstillinger', fn (int $seriesId) => $onboarding->updateSeriesOnboardingSettings($seriesId));
+    $router->get('/sesonger/{seriesId}/arrangor-soknader/{id}', fn (int $seriesId, int $id) => $onboarding->showSeriesApplication($seriesId, $id));
+    $router->post('/sesonger/{seriesId}/arrangor-soknader/{id}/godkjenn', fn (int $seriesId, int $id) => $onboarding->approve($seriesId, $id));
+    $router->post('/sesonger/{seriesId}/arrangor-soknader/{id}/avvis', fn (int $seriesId, int $id) => $onboarding->reject($seriesId, $id));
+    $router->post('/sesonger/{seriesId}/arrangor-soknader/{id}/under-behandling', fn (int $seriesId, int $id) => $onboarding->setUnderReview($seriesId, $id));
 
     // —— Legacy /portal-v3/* → nye paths (GET redirects; POST aliases uten ekstra logikk) ——
     $legacy = PortalPaths::LEGACY_PREFIX;

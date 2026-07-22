@@ -250,8 +250,185 @@ final class V3SpaceController
 
         $labels = $services->labels->resolveForSpace($space);
         $arrangerName = '';
+        $seasonBlocks = [];
         if ($isArrangerView) {
             $arrangerName = (string) ($work['detail'] ?? '');
+            $arrangerOrgId = (int) ($work['org_id'] ?? 0);
+            $canCreateEvent = $arrangerOrgId > 0
+                && $services->eventPolicy->canCreate($personId, $arrangerOrgId, $arrangerOrgId);
+            $resolver = new \App\Service\CupSeasonResolver();
+            $roots = $hierarchy['roots'] ?? [];
+            $children = $hierarchy['children'] ?? [];
+
+            // Fallback: godkjent seriearrangør uten hierarki-treff (f.eks. API/filter-glipp)
+            if ($roots === [] && $arrangerOrgId > 0) {
+                foreach ($services->spaceParticipation->listOrganizerRootSeriesInSpace($arrangerOrgId, $spaceId) as $root) {
+                    $roots[] = $root;
+                    $rid = (int) ($root['series_id'] ?? 0);
+                    if ($rid > 0 && !isset($children[$rid])) {
+                        $children[$rid] = [];
+                    }
+                }
+            }
+
+            // Fyll inn runder fra DB når hierarki mangler barn men sesongen har rundestruktur.
+            foreach ($roots as $root) {
+                $rid = (int) ($root['series_id'] ?? 0);
+                if ($rid <= 0) {
+                    continue;
+                }
+                if (($children[$rid] ?? []) !== []) {
+                    continue;
+                }
+                $dbChildren = $services->spaceParticipation->listChildSeriesByParentId($rid);
+                if ($dbChildren !== []) {
+                    $children[$rid] = $dbChildren;
+                }
+            }
+
+            // Arrangør trenger ikke global sesong — vis aktuelle sesonger bolkvis (rundevis når aktuelt).
+            foreach ($roots as $root) {
+                $rootId = (int) ($root['series_id'] ?? 0);
+                if ($rootId <= 0) {
+                    continue;
+                }
+                $label = trim((string) ($root['name'] ?? $root['season_label'] ?? ''));
+                if ($label === '') {
+                    $label = 'Sesong #' . $rootId;
+                }
+                $seriesIds = $resolver->collectSeriesIds($root, $children);
+                $childRounds = $children[$rootId] ?? [];
+                $structure = (string) ($root['structure_type'] ?? '');
+                $hasRoundChildren = $childRounds !== [];
+
+                $blockEvents = [];
+                foreach ($filtered as $event) {
+                    if (in_array((int) ($event['series_id'] ?? 0), $seriesIds, true)) {
+                        $blockEvents[] = $event;
+                    }
+                }
+
+                if ($hasRoundChildren) {
+                    $rounds = [];
+                    $assignedEventIds = [];
+                    foreach ($childRounds as $child) {
+                        $roundId = (int) ($child['series_id'] ?? 0);
+                        if ($roundId <= 0) {
+                            continue;
+                        }
+                        $roundLabel = trim((string) ($child['name'] ?? $child['season_label'] ?? ''));
+                        if ($roundLabel === '') {
+                            $roundLabel = 'Runde #' . $roundId;
+                        }
+                        $roundEvents = [];
+                        foreach ($blockEvents as $event) {
+                            if ((int) ($event['series_id'] ?? 0) === $roundId) {
+                                $roundEvents[] = $event;
+                                $eid = (int) ($event['event_id'] ?? 0);
+                                if ($eid > 0) {
+                                    $assignedEventIds[$eid] = true;
+                                }
+                            }
+                        }
+                        $roundCreateHref = null;
+                        if ($canCreateEvent) {
+                            $roundCreateHref = PortalPaths::sesongStevneNew($roundId);
+                        }
+                        $rounds[] = [
+                            'series_id' => $roundId,
+                            'label' => $roundLabel,
+                            'events' => $roundEvents,
+                            'create_href' => $roundCreateHref,
+                        ];
+                    }
+
+                    $orphanInSeason = [];
+                    foreach ($blockEvents as $event) {
+                        $eid = (int) ($event['event_id'] ?? 0);
+                        if ($eid > 0 && !isset($assignedEventIds[$eid])) {
+                            $orphanInSeason[] = $event;
+                        }
+                    }
+                    if ($orphanInSeason !== []) {
+                        $rounds[] = [
+                            'series_id' => 0,
+                            'label' => 'Uten runde',
+                            'events' => $orphanInSeason,
+                            'create_href' => null,
+                        ];
+                    }
+
+                    $seasonBlocks[] = [
+                        'series_id' => $rootId,
+                        'label' => $label,
+                        'events' => [],
+                        'rounds' => $rounds,
+                        'create_href' => null,
+                        'create_batch_href' => $canCreateEvent
+                            ? PortalPaths::sesongStevnerBatch($rootId)
+                            : null,
+                    ];
+                    continue;
+                }
+
+                // Sesong uten runder (structure_type=events eller tom): flat listing.
+                $createHref = null;
+                if ($canCreateEvent) {
+                    $createTargetId = $this->resolveCreateSeriesId(
+                        $services,
+                        $personId,
+                        $arrangerOrgId,
+                        $rootId,
+                        [],
+                    );
+                    if ($createTargetId <= 0
+                        && ($structure === 'events' || $structure === '')
+                        && $services->spaceParticipation->orgIsSeriesOrganizer($arrangerOrgId, $rootId)) {
+                        $createTargetId = $rootId;
+                    }
+                    if ($createTargetId > 0) {
+                        $createHref = PortalPaths::sesongStevneNew($createTargetId);
+                    }
+                }
+                $seasonBlocks[] = [
+                    'series_id' => $rootId,
+                    'label' => $label,
+                    'events' => $blockEvents,
+                    'rounds' => [],
+                    'create_href' => $createHref,
+                    'create_batch_href' => null,
+                ];
+            }
+
+            // Stevner uten kjent sesongrot (skal normalt ikke skje)
+            $knownEventIds = [];
+            foreach ($seasonBlocks as $block) {
+                foreach ($block['events'] as $event) {
+                    $knownEventIds[(int) ($event['event_id'] ?? 0)] = true;
+                }
+                foreach ($block['rounds'] ?? [] as $round) {
+                    foreach ($round['events'] ?? [] as $event) {
+                        $knownEventIds[(int) ($event['event_id'] ?? 0)] = true;
+                    }
+                }
+            }
+            $orphanEvents = [];
+            foreach ($filtered as $event) {
+                $eid = (int) ($event['event_id'] ?? 0);
+                if ($eid > 0 && !isset($knownEventIds[$eid])) {
+                    $orphanEvents[] = $event;
+                }
+            }
+            if ($orphanEvents !== []) {
+                $seasonBlocks[] = [
+                    'series_id' => 0,
+                    'label' => 'Andre stevner',
+                    'events' => $orphanEvents,
+                    'rounds' => [],
+                    'create_href' => null,
+                    'create_batch_href' => null,
+                ];
+            }
         }
 
         return PortalV3View::render('events/space-index', [
@@ -267,6 +444,45 @@ final class V3SpaceController
             'cup_access' => $menuAccess,
             'is_arranger_view' => $isArrangerView,
             'arranger_name' => $arrangerName,
+            'season_blocks' => $seasonBlocks,
         ], $labels->plural('event'));
+    }
+
+    /**
+     * Velg serie/runde som tillater direkte stevneopprettelse under aktiv sesong.
+     *
+     * @param list<array<string, mixed>> $children
+     */
+    private function resolveCreateSeriesId(
+        PortalV3Services $services,
+        int $personId,
+        int $orgId,
+        int $seasonRootId,
+        array $children,
+    ): int {
+        $root = $services->series->findAccessible($personId, $seasonRootId, $orgId);
+        if ($root === null) {
+            return 0;
+        }
+        $structure = (string) ($root['structure_type'] ?? '');
+        if ($structure === 'events' || $structure === '') {
+            if ($structure === 'events') {
+                return $seasonRootId;
+            }
+            // Uavklart: hvis ingen barn, tillat på rot; ellers foretrekk første runde.
+            if ($children === []) {
+                return $seasonRootId;
+            }
+        }
+        foreach ($children as $child) {
+            $cid = (int) ($child['series_id'] ?? 0);
+            if ($cid <= 0) {
+                continue;
+            }
+            // Runder under sesong tillater typisk direkte events.
+            return $cid;
+        }
+
+        return $structure === 'events' ? $seasonRootId : 0;
     }
 }

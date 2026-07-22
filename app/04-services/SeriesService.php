@@ -23,14 +23,14 @@ final class SeriesService
         $roots = [];
         $children = [];
         foreach ($this->series->listRootBySpaceId($spaceId, $orgId) as $root) {
-            if (!$this->policy->canView($personId, $root, $orgId)) {
+            if (!$this->policy->canViewEvents($personId, $root, $orgId)) {
                 continue;
             }
             $roots[] = $root;
             $sid = (int) ($root['series_id'] ?? 0);
             $children[$sid] = array_values(array_filter(
                 $this->series->listChildrenByParentId($sid, $orgId, $spaceId),
-                fn (array $child): bool => $this->policy->canView($personId, $child, $orgId),
+                fn (array $child): bool => $this->policy->canViewEvents($personId, $child, $orgId),
             ));
         }
 

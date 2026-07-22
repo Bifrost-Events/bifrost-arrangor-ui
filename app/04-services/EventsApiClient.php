@@ -280,6 +280,161 @@ final class EventsApiClient
         );
     }
 
+    /** @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>} */
+    public function listMyOrganizations(): array
+    {
+        return $this->unwrapData($this->get('/api/organizer/organizations/mine'));
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     * @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>}
+     */
+    public function createOrganization(array $body): array
+    {
+        return $this->unwrapData($this->post('/api/organizer/organizations', $body));
+    }
+
+    /** @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>} */
+    public function listOnboardingSeries(
+        ?int $orgId = null,
+        ?int $applicationId = null,
+        ?int $spaceId = null,
+        ?string $applicationKey = null,
+    ): array {
+        $query = [];
+        if ($orgId !== null && $orgId > 0) {
+            $query['org_id'] = $orgId;
+        }
+        if ($applicationKey !== null && trim($applicationKey) !== '') {
+            $query['application_key'] = trim($applicationKey);
+        } elseif ($applicationId !== null && $applicationId > 0) {
+            $query['application_id'] = $applicationId;
+        }
+        if ($spaceId !== null && $spaceId > 0) {
+            $query['space_id'] = $spaceId;
+        }
+
+        return $this->unwrapData($this->get('/api/organizer/organizer-onboarding/series', $query));
+    }
+
+    /** @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>} */
+    public function listMyApplications(?string $status = null): array
+    {
+        $query = [];
+        if ($status !== null && $status !== '') {
+            $query['status'] = $status;
+        }
+
+        return $this->unwrapData($this->get('/api/organizer/organizer-applications', $query));
+    }
+
+    /** @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>} */
+    public function getApplication(int $id): array
+    {
+        return $this->unwrapData($this->get('/api/organizer/organizer-applications/' . $id));
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     * @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>}
+     */
+    public function createApplication(int $seriesId, array $body): array
+    {
+        return $this->unwrapData($this->post('/api/organizer/series/' . $seriesId . '/organizer-applications', $body));
+    }
+
+    /** @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>} */
+    public function submitApplication(int $id): array
+    {
+        return $this->unwrapData($this->post('/api/organizer/organizer-applications/' . $id . '/submit', []));
+    }
+
+    /** @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>} */
+    public function withdrawApplication(int $id): array
+    {
+        return $this->unwrapData($this->post('/api/organizer/organizer-applications/' . $id . '/withdraw', []));
+    }
+
+    /** @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>} */
+    public function listSeriesApplications(int $orgId, int $seriesId, ?string $status = null): array
+    {
+        $query = ['org_id' => $orgId];
+        if ($status !== null && $status !== '') {
+            $query['status'] = $status;
+        }
+
+        return $this->unwrapData($this->get('/api/organizer/series/' . $seriesId . '/organizer-applications', $query));
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     * @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>}
+     */
+    public function approveApplication(int $id, array $body = []): array
+    {
+        return $this->unwrapData($this->post('/api/organizer/organizer-applications/' . $id . '/approve', $body));
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     * @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>}
+     */
+    public function rejectApplication(int $id, array $body): array
+    {
+        return $this->unwrapData($this->post('/api/organizer/organizer-applications/' . $id . '/reject', $body));
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     * @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>}
+     */
+    public function patchApplication(int $id, array $body): array
+    {
+        return $this->unwrapData($this->patch('/api/organizer/organizer-applications/' . $id, $body));
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     * @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>}
+     */
+    public function updateOnboardingSettings(int $orgId, int $seriesId, array $body): array
+    {
+        return $this->unwrapData($this->patch(
+            '/api/organizer/series/' . $seriesId . '/organizer-onboarding-settings?org_id=' . $orgId,
+            $body
+        ));
+    }
+
+    /**
+     * @param array<string, mixed> $query
+     * @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>}
+     */
+    public function lookupPeople(int $orgId, array $query): array
+    {
+        $q = trim((string) ($query['q'] ?? $query['query'] ?? ''));
+        if ($q !== '') {
+            return $this->unwrapData($this->get(
+                '/api/organizer/organizations/' . $orgId . '/people/lookup',
+                ['q' => $q]
+            ));
+        }
+
+        return $this->unwrapData($this->post(
+            '/api/organizer/organizations/' . $orgId . '/people/lookup',
+            $query
+        ));
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     * @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>}
+     */
+    public function createOrgPerson(int $orgId, array $body): array
+    {
+        return $this->unwrapData($this->post('/api/organizer/organizations/' . $orgId . '/people', $body));
+    }
+
     /** @param array<string, scalar|null> $query */
     private function get(string $path, array $query = []): array
     {
@@ -529,7 +684,7 @@ final class EventsApiClient
 
     /**
      * @param array{ok: bool, status: int, data: array<string, mixed>|null, error: string|null, errors?: array<string, string>} $response
-     * @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>}
+     * @return array{ok: bool, status: int, data: mixed, error: string|null, errors?: array<string, string>, meta?: array<string, mixed>}
      */
     private function unwrapData(array $response): array
     {
@@ -548,12 +703,16 @@ final class EventsApiClient
         }
 
         $payload = $response['data'];
-
-        return [
+        $out = [
             'ok' => true,
             'status' => (int) ($response['status'] ?? 200),
             'data' => is_array($payload) ? ($payload['data'] ?? $payload) : $payload,
             'error' => null,
         ];
+        if (is_array($payload) && is_array($payload['meta'] ?? null)) {
+            $out['meta'] = $payload['meta'];
+        }
+
+        return $out;
     }
 }

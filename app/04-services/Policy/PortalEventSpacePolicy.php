@@ -23,6 +23,10 @@ final class PortalEventSpacePolicy
             && $this->organizationPolicy->canAdministerOrganization($personId, $activeOrgId);
     }
 
+    /**
+     * Se cupen hvis man er cupadmin, admin i en organisasjon som eier stevne,
+     * eller aktiv seriearrangør (godkjent sesongsøknad).
+     */
     public function canView(int $personId, array $space, int $activeOrgId): bool
     {
         if ($this->canAdministerCup($personId, $space, $activeOrgId)) {
@@ -34,8 +38,12 @@ final class PortalEventSpacePolicy
         }
 
         $spaceId = (int) ($space['space_id'] ?? 0);
+        if ($spaceId <= 0) {
+            return false;
+        }
 
-        return $spaceId > 0 && $this->participation->orgHostsEventsInSpace($activeOrgId, $spaceId);
+        return $this->participation->orgHostsEventsInSpace($activeOrgId, $spaceId)
+            || $this->participation->orgIsSeriesOrganizerInSpace($activeOrgId, $spaceId);
     }
 
     public function canCreate(int $personId, int $ownerOrgId, int $activeOrgId): bool

@@ -47,6 +47,61 @@ final class PortalV3AuthService
         return ['ok' => true, 'user' => $user];
     }
 
+    /**
+     * Opprett ny brukerkonto + person. Oppretter ikke organisasjon.
+     *
+     * @param array<string, mixed> $input
+     * @return array{ok: bool, user?: array<string, mixed>, error?: string}
+     */
+    public function register(array $input): array
+    {
+        $firstName = trim((string) ($input['first_name'] ?? ''));
+        $lastName = trim((string) ($input['last_name'] ?? ''));
+        $email = trim((string) ($input['email'] ?? ''));
+        $phone = trim((string) ($input['phone'] ?? ''));
+        $password = (string) ($input['password'] ?? '');
+        $passwordConfirm = (string) ($input['password_confirm'] ?? '');
+
+        if ($firstName === '' || $lastName === '' || $email === '') {
+            return ['ok' => false, 'error' => 'Fornavn, etternavn og e-post er påkrevd.'];
+        }
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return ['ok' => false, 'error' => 'Ugyldig e-postadresse.'];
+        }
+        if (strlen($password) < 8) {
+            return ['ok' => false, 'error' => 'Passordet må være minst 8 tegn.'];
+        }
+        if ($password !== $passwordConfirm) {
+            return ['ok' => false, 'error' => 'Passordene er ikke like.'];
+        }
+        if ($this->users->findByEmail($email) !== null) {
+            return ['ok' => false, 'error' => 'E-postadressen er allerede registrert. Logg inn i stedet.'];
+        }
+
+        try {
+            $userId = $this->users->createWithPerson([
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'email' => $email,
+                'phone' => $phone !== '' ? $phone : null,
+                'password' => $password,
+            ]);
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'error' => 'Kunne ikke opprette konto.'];
+        }
+
+        $row = $this->users->findByEmail($email);
+        if ($row === null || (int) ($row['user_id'] ?? 0) !== $userId) {
+            return ['ok' => false, 'error' => 'Konto opprettet, men innlogging feilet. Prøv å logge inn.'];
+        }
+
+        $user = $this->sessionUserFromRow($row);
+        PortalV3Session::setAuth($user);
+        AdminSessionBridge::syncFromPortalUser($user);
+
+        return ['ok' => true, 'user' => $user];
+    }
+
     public function logout(): void
     {
         PortalV3Session::clearAuth();

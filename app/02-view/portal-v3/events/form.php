@@ -19,13 +19,29 @@ $pp = $pp ?? \App\Support\PortalPaths::class;
 $action = $is_edit
     ? $pp::stevne($eventId)
     : $pp::sesongStevner($seriesId);
+$work = is_array($work_context ?? null) ? $work_context : [];
+$isArrangerMode = ($work['mode'] ?? '') === \App\Support\PortalV3Session::WORK_MODE_ARRANGER;
+$backHref = $isArrangerMode ? ($pp::stevner() . '?season_scope=all') : $pp::stevner();
+$statusLabels = [
+    'draft' => 'Utkast',
+    'active' => 'Aktiv',
+    'inactive' => 'Inaktiv',
+    'published' => 'Publisert',
+    'completed' => 'Fullført',
+    'cancelled' => 'Avlyst',
+];
+$visibilityLabels = [
+    'internal' => 'Intern',
+    'public' => 'Offentlig',
+    'private' => 'Privat',
+];
 ?>
 <p class="muted" style="margin:0 0 .35rem;">
     <?php if ($cupName !== ''): ?><?= $h($cupName) ?><?php endif; ?>
     <?php if ($orgName !== ''): ?> › <?= $h($orgName) ?><?php endif; ?>
     <?php if ($eventTitle !== ''): ?> › <?= $h($eventTitle) ?><?php endif; ?>
 </p>
-<p><a href="<?= $h($pp::stevner()) ?>">
+<p><a href="<?= $h($backHref) ?>">
     ← <?= $h($labels->plural('event')) ?>
 </a></p>
 <h1><?= $is_edit ? 'Rediger' : 'Nytt' ?> <?= $h(strtolower($labels->singular('event'))) ?></h1>
@@ -57,14 +73,18 @@ $action = $is_edit
         <label for="status">Status</label>
         <select id="status" name="status">
             <?php foreach (['draft', 'active', 'inactive'] as $st): ?>
-                <option value="<?= $st ?>" <?= (($event['status'] ?? 'draft') === $st) ? 'selected' : '' ?>><?= $h($st) ?></option>
+                <option value="<?= $st ?>" <?= (($event['status'] ?? 'draft') === $st) ? 'selected' : '' ?>>
+                    <?= $h($statusLabels[$st] ?? $st) ?>
+                </option>
             <?php endforeach; ?>
         </select>
 
         <label for="visibility">Synlighet</label>
         <select id="visibility" name="visibility">
             <?php foreach (['internal', 'public', 'private'] as $vis): ?>
-                <option value="<?= $vis ?>" <?= (($event['visibility'] ?? 'internal') === $vis) ? 'selected' : '' ?>><?= $h($vis) ?></option>
+                <option value="<?= $vis ?>" <?= (($event['visibility'] ?? 'internal') === $vis) ? 'selected' : '' ?>>
+                    <?= $h($visibilityLabels[$vis] ?? $vis) ?>
+                </option>
             <?php endforeach; ?>
         </select>
 

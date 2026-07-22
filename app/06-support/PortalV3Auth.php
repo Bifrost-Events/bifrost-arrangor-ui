@@ -50,9 +50,12 @@ final class PortalV3Auth
 
         $orgs = $orgContext->administrableOrganizations(self::personId() ?? 0);
         if ($orgs === []) {
-            PortalV3Session::setFlash('error', 'Du har ingen organisasjon med administratortilgang.');
+            PortalV3Session::setFlash(
+                'info',
+                'Du har ingen organisasjon ennå. Opprett en organisasjon for å komme i gang som arrangør.'
+            );
 
-            return Response::redirect(PortalPaths::oversikt());
+            return Response::redirect(PortalPaths::komIGang());
         }
 
         return null;

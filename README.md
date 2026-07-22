@@ -28,12 +28,11 @@ Meny og funksjoner styres av organisasjon, Event Space og brukerens roller (AB-0
 
 Tildeling via `event_person_roles` — uten org-medlemskap (AB-0021).
 
-Serieeier og arrangementseier er **organisasjoner** — ikke brukerroller. Policy-lag i `bifrost-events` — se [organizer-portal-authorization.md](../bifrost-docs/architecture/organizer-portal-authorization.md).
+Serieeier og arrangementseier er **organisasjoner** — ikke brukerroller. Policy-lag i Events-modulen (`bifrost-admin-core/modules/events`) — se [organizer-portal-authorization.md](../bifrost-docs/architecture/organizer-portal-authorization.md).
 
 ## Avhengigheter
 
-- **bifrost-events** — domenemodul (tabeller, API, migreringer)
-- **bifrost-admin-core** — plattformkjerne (org, personer, brukere, medlemskap, roller)
+- **bifrost-admin-core** — plattformkjerne + Events-modul (`modules/events`: tabeller, API, migreringer)
 
 Admin Core håndterer plattformoppsett; denne portalen håndterer daglig arrangementsarbeid.
 
@@ -41,12 +40,13 @@ Admin Core håndterer plattformoppsett; denne portalen håndterer daglig arrange
 
 - [AB-0020](../bifrost-docs/decisions/AB-0020-organizer-portal-authorization.md)
 - [AB-0021](../bifrost-docs/decisions/AB-0021-event-person-roles.md)
+- [AB-0022](../bifrost-docs/decisions/AB-0022-events-module-in-admin-core.md)
 - [event_person_roles.md](../bifrost-docs/architecture/entities/event_person_roles.md)
 - [organizer-portal-authorization.md](../bifrost-docs/architecture/organizer-portal-authorization.md)
-- [events-authorization.md](../bifrost-events/docs/events-authorization.md)
+- [events-authorization.md](../bifrost-admin-core/modules/events/docs/events-authorization.md)
 - [repo-and-admin-structure.md](../bifrost-docs/architecture/repo-and-admin-structure.md)
 - [docs/v3-organizer-portal-transition.md](docs/v3-organizer-portal-transition.md)
-- [events-module.md](../bifrost-events/docs/events-module.md)
+- [events-module.md](../bifrost-admin-core/modules/events/docs/events-module.md)
 
 ## Status
 

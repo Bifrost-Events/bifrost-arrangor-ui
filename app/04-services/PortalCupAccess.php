@@ -7,7 +7,7 @@ namespace App\Service;
 /**
  * Rolleperspektiv i aktiv cup — uten nye role_keys.
  * - cup_admin: admin på event_spaces.owner_org_id
- * - arranger_admin: admin på minst én org som eier stevne i cupen (og ikke cup_admin)
+ * - arranger_admin: admin på org som eier stevne ELLER er aktiv seriearrangør i cupen
  */
 final class PortalCupAccess
 {
@@ -24,7 +24,8 @@ final class PortalCupAccess
      *   can_manage_cup: bool,
      *   can_view_arrangers: bool,
      *   can_view_all_events: bool,
-     *   admin_org_ids: list<int>
+     *   admin_org_ids: list<int>,
+     *   arranger_org_ids: list<int>
      * }
      */
     public function forSpace(int $personId, array $space): array
@@ -44,20 +45,24 @@ final class PortalCupAccess
             && in_array($spaceOwnerOrgId, $adminOrgIds, true)
             && $this->services->organizationPolicy->canAdministerOrganization($personId, $spaceOwnerOrgId);
 
-        $hostsInCup = [];
+        $arrangerCandidateOrgIds = [];
         $spaceId = (int) ($space['space_id'] ?? 0);
         if ($spaceId > 0) {
             foreach ($this->services->spaceParticipation->listHostOrganizationsInSpace($spaceId) as $host) {
-                $hostsInCup[] = (int) ($host['org_id'] ?? 0);
+                $arrangerCandidateOrgIds[] = (int) ($host['org_id'] ?? 0);
+            }
+            foreach ($this->services->spaceParticipation->listSeriesOrganizerOrganizationsInSpace($spaceId) as $org) {
+                $arrangerCandidateOrgIds[] = (int) ($org['org_id'] ?? 0);
             }
         }
+        $arrangerCandidateOrgIds = array_values(array_unique(array_filter($arrangerCandidateOrgIds)));
 
-        $arrangerOrgIds = array_values(array_intersect($adminOrgIds, $hostsInCup));
+        $arrangerOrgIds = array_values(array_intersect($adminOrgIds, $arrangerCandidateOrgIds));
         $isArrangerAdmin = !$isCupAdmin && $arrangerOrgIds !== [];
 
         return [
             'is_cup_admin' => $isCupAdmin,
-            'is_arranger_admin' => $isArrangerAdmin || ($isCupAdmin === false && $arrangerOrgIds !== []),
+            'is_arranger_admin' => $isArrangerAdmin,
             'can_manage_cup' => $isCupAdmin,
             'can_view_arrangers' => $isCupAdmin,
             'can_view_all_events' => $isCupAdmin,

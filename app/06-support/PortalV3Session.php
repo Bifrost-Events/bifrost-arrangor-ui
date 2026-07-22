@@ -12,9 +12,19 @@ final class PortalV3Session
     private const SEASON_KEY = 'portal_v3_season_series_id';
     private const WORK_MODE_KEY = 'portal_v3_work_mode';
     private const FLASH_KEY = 'portal_v3_flash';
+    private const ONBOARDING_APP_KEY = 'portal_v3_onboarding_application_id';
+    private const ONBOARDING_ORG_KEY = 'portal_v3_onboarding_org_id';
+    private const ONBOARDING_SERIES_KEY = 'portal_v3_onboarding_series_id';
 
     public const WORK_MODE_CUP = 'cup';
     public const WORK_MODE_ARRANGER = 'arranger';
+
+    public const ONBOARDING_STEP_ACCOUNT = 'account';
+    public const ONBOARDING_STEP_ORGANIZATION = 'organization';
+    public const ONBOARDING_STEP_APPLICATION = 'application';
+    public const ONBOARDING_STEP_SERIES = 'series';
+    public const ONBOARDING_STEP_DETAILS = 'details';
+    public const ONBOARDING_STEP_DONE = 'done';
 
     /** @param array<string, mixed> $user */
     public static function setAuth(array $user): void
@@ -42,6 +52,9 @@ final class PortalV3Session
             $_SESSION[self::SEASON_KEY],
             $_SESSION[self::WORK_MODE_KEY],
             $_SESSION[self::FLASH_KEY],
+            $_SESSION[self::ONBOARDING_APP_KEY],
+            $_SESSION[self::ONBOARDING_ORG_KEY],
+            $_SESSION[self::ONBOARDING_SERIES_KEY],
         );
     }
 
@@ -150,5 +163,66 @@ final class PortalV3Session
             'message' => (string) ($flash['message'] ?? ''),
             'errors' => is_array($flash['errors'] ?? null) ? $flash['errors'] : [],
         ];
+    }
+
+    public static function setOnboardingApplicationId(?int $applicationId): void
+    {
+        Session::startRequired();
+        if ($applicationId === null || $applicationId <= 0) {
+            unset($_SESSION[self::ONBOARDING_APP_KEY]);
+
+            return;
+        }
+        $previous = self::getOnboardingApplicationId();
+        $_SESSION[self::ONBOARDING_APP_KEY] = $applicationId;
+        if ($previous !== null && $previous !== $applicationId) {
+            unset($_SESSION[self::ONBOARDING_SERIES_KEY]);
+        }
+    }
+
+    public static function getOnboardingApplicationId(): ?int
+    {
+        Session::startRequired();
+        $id = $_SESSION[self::ONBOARDING_APP_KEY] ?? null;
+
+        return is_int($id) || (is_string($id) && ctype_digit($id)) ? (int) $id : null;
+    }
+
+    public static function setOnboardingOrgId(?int $orgId): void
+    {
+        Session::startRequired();
+        if ($orgId === null || $orgId <= 0) {
+            unset($_SESSION[self::ONBOARDING_ORG_KEY]);
+
+            return;
+        }
+        $_SESSION[self::ONBOARDING_ORG_KEY] = $orgId;
+    }
+
+    public static function getOnboardingOrgId(): ?int
+    {
+        Session::startRequired();
+        $id = $_SESSION[self::ONBOARDING_ORG_KEY] ?? null;
+
+        return is_int($id) || (is_string($id) && ctype_digit($id)) ? (int) $id : null;
+    }
+
+    public static function setOnboardingSeriesId(?int $seriesId): void
+    {
+        Session::startRequired();
+        if ($seriesId === null || $seriesId <= 0) {
+            unset($_SESSION[self::ONBOARDING_SERIES_KEY]);
+
+            return;
+        }
+        $_SESSION[self::ONBOARDING_SERIES_KEY] = $seriesId;
+    }
+
+    public static function getOnboardingSeriesId(): ?int
+    {
+        Session::startRequired();
+        $id = $_SESSION[self::ONBOARDING_SERIES_KEY] ?? null;
+
+        return is_int($id) || (is_string($id) && ctype_digit($id)) ? (int) $id : null;
     }
 }

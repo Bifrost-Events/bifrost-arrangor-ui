@@ -42,20 +42,26 @@ final class PortalWorkContext
         $arrangerIds = $access['arranger_org_ids'] ?? [];
         // Cupadmin kan også «ta på seg» arrangør-hatt for orgs de adminer som arrangerer i cupen
         if ($access['can_manage_cup'] ?? false) {
-            $hosts = [];
+            $candidateIds = [];
             $spaceId = (int) ($space['space_id'] ?? 0);
             if ($spaceId > 0) {
                 foreach ($this->services->spaceParticipation->listHostOrganizationsInSpace($spaceId) as $host) {
                     $hid = (int) ($host['org_id'] ?? 0);
                     if ($hid > 0 && $hid !== $cupOwner) {
-                        $hosts[] = $hid;
+                        $candidateIds[] = $hid;
+                    }
+                }
+                foreach ($this->services->spaceParticipation->listSeriesOrganizerOrganizationsInSpace($spaceId) as $org) {
+                    $oid = (int) ($org['org_id'] ?? 0);
+                    if ($oid > 0 && $oid !== $cupOwner) {
+                        $candidateIds[] = $oid;
                     }
                 }
             }
             $adminIds = $access['admin_org_ids'] ?? [];
             $arrangerIds = array_values(array_unique(array_merge(
                 $arrangerIds,
-                array_intersect($adminIds, $hosts),
+                array_intersect($adminIds, $candidateIds),
             )));
         }
 

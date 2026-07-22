@@ -14,12 +14,23 @@ final class PortalSeriesPolicy
     ) {
     }
 
+    /**
+     * Lesetilgang: serieeier eller aktiv seriearrangør (inkl. underordnede runder).
+     */
     public function canView(int $personId, array $series, int $activeOrgId): bool
     {
-        $ownerOrgId = (int) ($series['owner_org_id'] ?? 0);
+        if (!$this->organizationPolicy->canAdministerOrganization($personId, $activeOrgId)) {
+            return false;
+        }
 
-        return $ownerOrgId === $activeOrgId
-            && $this->organizationPolicy->canAdministerOrganization($personId, $activeOrgId);
+        $ownerOrgId = (int) ($series['owner_org_id'] ?? 0);
+        if ($ownerOrgId === $activeOrgId) {
+            return true;
+        }
+
+        $seriesId = (int) ($series['series_id'] ?? 0);
+
+        return $seriesId > 0 && $this->participation->orgIsSeriesOrganizer($activeOrgId, $seriesId);
     }
 
     public function canCreate(int $personId, int $ownerOrgId, int $activeOrgId): bool
@@ -30,7 +41,10 @@ final class PortalSeriesPolicy
 
     public function canEdit(int $personId, array $series, int $activeOrgId): bool
     {
-        return $this->canView($personId, $series, $activeOrgId);
+        $ownerOrgId = (int) ($series['owner_org_id'] ?? 0);
+
+        return $ownerOrgId === $activeOrgId
+            && $this->organizationPolicy->canAdministerOrganization($personId, $activeOrgId);
     }
 
     public function canArchive(int $personId, array $series, int $activeOrgId): bool
