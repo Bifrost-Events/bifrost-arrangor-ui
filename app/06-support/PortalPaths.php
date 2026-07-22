@@ -87,6 +87,11 @@ final class PortalPaths
         return '/sesonger/' . $seasonRootId . '/runder';
     }
 
+    public static function sesongRoundsBatchCreate(int $seasonRootId): string
+    {
+        return '/sesonger/' . $seasonRootId . '/runder/opprett';
+    }
+
     public static function sesongChildren(int $parentId): string
     {
         return '/sesonger/' . $parentId . '/undersoner';

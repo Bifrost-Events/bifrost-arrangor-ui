@@ -638,6 +638,179 @@ final class V3SeriesController
         return Response::redirect(PortalPaths::cup() . '#season-' . $seasonRootId);
     }
 
+    /** Opprett N runder under sesong (tom rundestruktur). */
+    public function roundsBatchCreate(int $seasonRootId): array
+    {
+        $services = new PortalV3Services();
+        if ($redirect = PortalV3Auth::requireOrganizationContext($services->organizationContext)) {
+            return $redirect;
+        }
+
+        $personId = PortalV3Auth::personId() ?? 0;
+        $userId = (int) (PortalV3Auth::user()['user_id'] ?? 0);
+        $orgId = (int) ($services->organizationContext->activeOrganizationId() ?? 0);
+        $season = $services->series->findAccessible($personId, $seasonRootId, $orgId);
+        if ($season === null || !$services->seriesPolicy->canEdit($personId, $season, $orgId)) {
+            PortalV3Session::setFlash('error', 'Sesong ikke funnet eller ingen tilgang.');
+
+            return Response::redirect(PortalPaths::cup());
+        }
+        if ((int) ($season['parent_series_id'] ?? 0) > 0) {
+            PortalV3Session::setFlash('error', 'Runder opprettes under sesongen, ikke under en enkelt runde.');
+
+            return Response::redirect(PortalPaths::cup());
+        }
+        if ($blocked = $this->blockUnlessRoundsStructure($season)) {
+            return $blocked;
+        }
+
+        $spaceId = (int) ($season['space_id'] ?? 0);
+        $hierarchy = $services->series->hierarchyForSpace($personId, $spaceId, $orgId);
+        $existingRounds = $hierarchy['children'][$seasonRootId] ?? [];
+        if ($existingRounds === []) {
+            $existingRounds = $services->spaceParticipation->listChildSeriesByParentId($seasonRootId);
+        }
+        if ($existingRounds !== []) {
+            PortalV3Session::setFlash(
+                'error',
+                'Sesongen har allerede runder. Bruk «Ny runde» for å legge til én, eller rediger eksisterende.',
+            );
+
+            return Response::redirect(PortalPaths::cup() . '#season-' . $seasonRootId);
+        }
+
+        $count = (int) ($_POST['round_count'] ?? 0);
+        if ($count < 1 || $count > 24) {
+            PortalV3Session::setFlash('error', 'Velg antall runder mellom 1 og 24.');
+
+            return Response::redirect(PortalPaths::cup() . '#season-' . $seasonRootId);
+        }
+
+        $seasonPost = is_array($_POST['season'] ?? null) ? $_POST['season'] : [];
+        $seasonStartsOn = trim((string) ($seasonPost['starts_on'] ?? ''));
+        $seasonEndsOn = trim((string) ($seasonPost['ends_on'] ?? ''));
+        if ($seasonStartsOn === '') {
+            $seasonStartsOn = (string) ($this->toDateOnly($season['starts_at'] ?? null) ?? '');
+        }
+        if ($seasonEndsOn === '') {
+            $seasonEndsOn = (string) ($this->toDateOnly($season['ends_at'] ?? null) ?? '');
+        }
+        $seasonStartsAt = $this->normalizeSeriesDateBound($seasonStartsOn, false);
+        $seasonEndsAt = $this->normalizeSeriesDateBound($seasonEndsOn, true);
+        $seasonFrom = $this->toDateOnly($seasonStartsAt);
+        $seasonTo = $this->toDateOnly($seasonEndsAt);
+
+        if ($seasonFrom === null || $seasonTo === null) {
+            PortalV3Session::setFlash('error', 'Sett sesong fra/til før du oppretter runder.');
+
+            return Response::redirect(PortalPaths::cup() . '#season-' . $seasonRootId);
+        }
+        if ($seasonTo < $seasonFrom) {
+            PortalV3Session::setFlash('error', 'Sesong: til-dato kan ikke være før fra-dato.');
+
+            return Response::redirect(PortalPaths::cup() . '#season-' . $seasonRootId);
+        }
+
+        $seasonFull = $services->series->findAccessible($personId, $seasonRootId, $orgId) ?? $season;
+        $seasonData = [
+            'owner_org_id' => (int) ($seasonFull['owner_org_id'] ?? $orgId),
+            'space_id' => $spaceId,
+            'parent_series_id' => null,
+            'name' => (string) ($seasonFull['name'] ?? ''),
+            'short_name' => $seasonFull['short_name'] ?? null,
+            'slug' => $seasonFull['slug'] ?? null,
+            'description' => $seasonFull['description'] ?? null,
+            'series_type' => (string) ($seasonFull['series_type'] ?? 'season'),
+            'season_label' => $seasonFull['season_label'] ?? null,
+            'sort_order' => isset($seasonFull['sort_order']) ? (int) $seasonFull['sort_order'] : null,
+            'starts_at' => $seasonStartsAt,
+            'ends_at' => $seasonEndsAt,
+            'status' => (string) ($seasonFull['status'] ?? 'active'),
+            'visibility' => (string) ($seasonFull['visibility'] ?? 'internal'),
+        ];
+        if (!$services->series->update($personId, $orgId, $seasonRootId, $seasonData, $userId > 0 ? $userId : null)) {
+            PortalV3Session::setFlash('error', 'Kunne ikke lagre sesongperioden.');
+
+            return Response::redirect(PortalPaths::cup() . '#season-' . $seasonRootId);
+        }
+
+        $labels = $services->labels->resolveBySpaceId($spaceId, $orgId);
+        $roundLabel = $labels->singular('subseries');
+        $periods = $this->partitionSeasonDates($seasonFrom, $seasonTo, $count);
+        $created = 0;
+        $failed = [];
+
+        foreach ($periods as $i => $period) {
+            $n = $i + 1;
+            $data = [
+                'owner_org_id' => $orgId,
+                'space_id' => $spaceId,
+                'parent_series_id' => $seasonRootId,
+                'name' => $roundLabel . ' ' . $n,
+                'short_name' => null,
+                'description' => null,
+                'series_type' => 'round',
+                'season_label' => null,
+                'sort_order' => $n,
+                'starts_at' => $this->normalizeSeriesDateBound($period['starts_on'], false),
+                'ends_at' => $this->normalizeSeriesDateBound($period['ends_on'], true),
+                'status' => 'active',
+                'visibility' => (string) ($seasonFull['visibility'] ?? 'internal'),
+            ];
+            $newId = $services->series->create($personId, $orgId, $data, $userId > 0 ? $userId : null);
+            if ($newId === null) {
+                $failed[] = $data['name'];
+                continue;
+            }
+            ++$created;
+        }
+
+        if ($created === 0) {
+            PortalV3Session::setFlash('error', 'Kunne ikke opprette runder.');
+        } elseif ($failed !== []) {
+            PortalV3Session::setFlash(
+                'error',
+                'Opprettet ' . $created . ' runde(r), men feilet for: ' . implode(', ', $failed),
+            );
+        } else {
+            PortalV3Session::setFlash('success', $created . ' runder opprettet. Juster datoene ved behov og lagre.');
+        }
+
+        return Response::redirect(PortalPaths::cup() . '#season-' . $seasonRootId);
+    }
+
+    /**
+     * Del sesongintervall i N sammenhengende, ikke-overlappende perioder (inkl. start/slutt).
+     *
+     * @return list<array{starts_on: string, ends_on: string}>
+     */
+    private function partitionSeasonDates(string $seasonFrom, string $seasonTo, int $count): array
+    {
+        $start = new \DateTimeImmutable($seasonFrom);
+        $end = new \DateTimeImmutable($seasonTo);
+        $totalDays = (int) $start->diff($end)->days + 1;
+        if ($totalDays < 1) {
+            $totalDays = 1;
+        }
+        if ($count > $totalDays) {
+            $count = $totalDays;
+        }
+
+        $periods = [];
+        for ($i = 0; $i < $count; ++$i) {
+            $segStart = (int) floor($i * $totalDays / $count);
+            $segEnd = (int) floor(($i + 1) * $totalDays / $count) - 1;
+            if ($segEnd < $segStart) {
+                $segEnd = $segStart;
+            }
+            $from = $start->modify('+' . $segStart . ' days')->format('Y-m-d');
+            $to = $start->modify('+' . $segEnd . ' days')->format('Y-m-d');
+            $periods[] = ['starts_on' => $from, 'ends_on' => $to];
+        }
+
+        return $periods;
+    }
+
     /**
      * Runder (underserier) er bare tillatt når sesongstrukturen er «rounds».
      *

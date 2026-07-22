@@ -142,6 +142,27 @@ $formatPeriod = static function (array $row) use ($toDateInput): string {
         padding-top: 0;
         border-bottom: 1px solid #e6e8e4;
     }
+    .rounds-batch-create {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: .65rem 1rem;
+        margin: .85rem 0 .35rem;
+    }
+    .rounds-batch-create label {
+        display: block;
+        font-size: .85rem;
+        font-weight: 600;
+        margin-bottom: .25rem;
+    }
+    .rounds-batch-create input[type="number"] {
+        width: 5.5rem;
+        padding: .45rem .5rem;
+    }
+    .rounds-batch-create .matrix-hint {
+        flex: 1 1 100%;
+        margin: 0;
+    }
     .rounds-matrix tr.js-round-error-row td {
         border-bottom: 1px solid #e6e8e4;
     }
@@ -259,6 +280,20 @@ $formatPeriod = static function (array $row) use ($toDateInput): string {
 
                     <?php if ($subs === []): ?>
                         <p class="muted">Ingen <?= $h(strtolower($labels->plural('subseries'))) ?> ennå.</p>
+                        <div class="rounds-batch-create">
+                            <label for="round-count-<?= $rootId ?>">Antall <?= $h(strtolower($labels->plural('subseries'))) ?></label>
+                            <input type="number" id="round-count-<?= $rootId ?>" name="round_count"
+                                   min="1" max="24" value="6" required
+                                   aria-describedby="round-count-hint-<?= $rootId ?>">
+                            <button type="submit" class="btn"
+                                    formaction="<?= $h($pp::sesongRoundsBatchCreate($rootId)) ?>">
+                                Opprett
+                            </button>
+                            <p id="round-count-hint-<?= $rootId ?>" class="matrix-hint">
+                                Oppretter <?= $h(strtolower($labels->plural('subseries'))) ?> med jevnt fordelte datoer innenfor sesongen.
+                                Du kan justere navn og datoer etterpå.
+                            </p>
+                        </div>
                     <?php else: ?>
                         <table class="rounds-matrix">
                             <thead>
@@ -315,10 +350,12 @@ $formatPeriod = static function (array $row) use ($toDateInput): string {
                     <?php endif; ?>
 
                     <div class="matrix-actions">
-                        <button type="submit" class="btn">Lagre perioder</button>
-                        <a class="btn secondary" href="<?= $h($pp::sesongChildNew($rootId)) ?>">
-                            Ny <?= $h(strtolower($labels->singular('subseries'))) ?>
-                        </a>
+                        <?php if ($subs !== []): ?>
+                            <button type="submit" class="btn">Lagre perioder</button>
+                            <a class="btn secondary" href="<?= $h($pp::sesongChildNew($rootId)) ?>">
+                                Ny <?= $h(strtolower($labels->singular('subseries'))) ?>
+                            </a>
+                        <?php endif; ?>
                     </div>
                 </form>
             <?php else: ?>

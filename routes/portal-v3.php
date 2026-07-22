@@ -90,6 +90,7 @@ return function (Router $router): void {
     $router->get('/sesonger/{parentId}/undersoner/ny', $withSpace(fn (int $spaceId, int $parentId) => $series->createChildForm($spaceId, $parentId)));
     $router->post('/sesonger/{parentId}/undersoner', $withSpace(fn (int $spaceId, int $parentId) => $series->createChildSubmit($spaceId, $parentId)));
     $router->post('/sesonger/{seriesId}/runder', fn (int $seriesId) => $series->roundsMatrixSubmit($seriesId));
+    $router->post('/sesonger/{seriesId}/runder/opprett', fn (int $seriesId) => $series->roundsBatchCreate($seriesId));
     $router->get('/sesonger/{seriesId}/rediger', fn (int $seriesId) => $series->editForm($seriesId));
     $router->post('/sesonger/{seriesId}/rediger', fn (int $seriesId) => $series->editSubmit($seriesId));
     $router->get('/sesonger/{seriesId}/struktur', fn (int $seriesId) => $series->structureForm($seriesId));
