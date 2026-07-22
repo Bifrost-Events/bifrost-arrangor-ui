@@ -122,10 +122,8 @@ final class AdminApiSession
         $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         if ($responseBody === false) {
             $err = curl_error($ch);
-            curl_close($ch);
             throw new \RuntimeException($err !== '' ? $err : 'curl_exec feilet');
         }
-        curl_close($ch);
 
         return [
             'status' => $status,
