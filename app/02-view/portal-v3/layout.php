@@ -85,12 +85,29 @@ foreach ($cssVars as $name => $value) {
         body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg); color: var(--ink); }
         .shell { min-height: 100vh; display: flex; flex-direction: column; }
         main { flex: 1; padding: 0; }
-        .main-inner { padding: 1.5rem 2rem; max-width: 72rem; }
+        /* Konservativ innholdsbredde — midtstilt på brede skjermer */
+        :root {
+            --content-max: 56rem;
+            --content-gutter: 1.25rem;
+        }
+        .main-inner {
+            max-width: var(--content-max);
+            margin: 0 auto;
+            padding: 1.25rem var(--content-gutter);
+            width: 100%;
+        }
+        .account-bar,
+        .cup-context,
+        .workspace-tabs {
+            padding-left: max(var(--content-gutter), calc((100% - var(--content-max)) / 2 + var(--content-gutter)));
+            padding-right: max(var(--content-gutter), calc((100% - var(--content-max)) / 2 + var(--content-gutter)));
+        }
         .workspace-tabs {
             display: flex;
             flex-wrap: wrap;
             gap: .15rem 1rem;
-            padding: .65rem 2rem 0;
+            padding-top: .65rem;
+            padding-bottom: 0;
             border-bottom: 1px solid rgba(0,0,0,.08);
             background: var(--card, #fff);
         }
@@ -112,7 +129,8 @@ foreach ($cssVars as $name => $value) {
         .cup-context {
             background: var(--cup-bar);
             color: #eef3ef;
-            padding: .85rem 2rem;
+            padding-top: .85rem;
+            padding-bottom: .85rem;
             border-bottom: 1px solid rgba(0,0,0,.2);
             display: flex;
             align-items: center;
@@ -185,7 +203,8 @@ foreach ($cssVars as $name => $value) {
             justify-content: flex-end;
             gap: .75rem 1.25rem;
             flex-wrap: wrap;
-            padding: .55rem 2rem;
+            padding-top: .55rem;
+            padding-bottom: .55rem;
             background: #f7f8f6;
             border-bottom: 1px solid #e2e5df;
             font-size: .9rem;
@@ -338,12 +357,13 @@ foreach ($cssVars as $name => $value) {
         input, select, textarea { width: 100%; max-width: 32rem; padding: .5rem; border: 1px solid #ccc; border-radius: 4px; }
         .muted { color: var(--muted); font-size: .9rem; }
         @media (max-width: 800px) {
-            .cup-context { padding: .75rem 1rem; }
-            .account-bar { padding: .55rem 1rem; }
+            :root { --content-gutter: 1rem; }
+            .cup-context { padding-top: .75rem; padding-bottom: .75rem; }
+            .account-bar { padding-top: .55rem; padding-bottom: .55rem; }
+            .main-inner { padding-top: 1rem; padding-bottom: 1rem; }
+            .workspace-tabs { padding-top: .5rem; }
             .account-bar .mode-switch { margin-right: 0; width: 100%; }
             .account-bar .mode-switch summary { width: 100%; }
-            .main-inner { padding: 1rem; }
-            .workspace-tabs { padding: .5rem 1rem 0; }
         }
     </style>
 </head>

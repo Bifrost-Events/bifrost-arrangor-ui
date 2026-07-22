@@ -244,7 +244,21 @@ final class PortalV3SmokeTest
         if (!str_contains($loginHtml, 'Kom i gang') || !str_contains($loginHtml, $pp::komIGang())) {
             throw new \RuntimeException('Innloggingsside skal lenke til Kom i gang for nye arrangører');
         }
-        $lines[] = 'OK: login-side lenker til Kom i gang';
+        if (!str_contains($loginHtml, 'Glemt passord') || !str_contains($loginHtml, $pp::glemtPassord())) {
+            throw new \RuntimeException('Innloggingsside skal lenke til Glemt passord');
+        }
+        if (!str_contains($loginHtml, 'arrangør') && !str_contains($loginHtml, 'Arrangør')) {
+            throw new \RuntimeException('Innloggingsside skal ha norsk hjelpetekst om arrangør');
+        }
+        if (str_contains($loginHtml, 'Bifrost core og Events API')) {
+            throw new \RuntimeException('Innloggingsside skal ikke vise teknisk API-jargon');
+        }
+        $lines[] = 'OK: login-side lenker til Kom i gang og Glemt passord';
+
+        if ($pp::glemtPassord() !== '/glemt-passord' || $pp::tilbakestillPassord() !== '/tilbakestill-passord') {
+            throw new \RuntimeException('PortalPaths for glemt/tilbakestill passord er feil');
+        }
+        $lines[] = 'OK: PortalPaths glemt/tilbakestill passord';
 
         $guestHtml = $this->renderGetStartedSnippet('account', []);
         if (!str_contains($guestHtml, 'Opprett konto') || !str_contains($guestHtml, 'name="password"')) {

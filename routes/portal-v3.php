@@ -10,6 +10,7 @@ use App\Controller\V3\V3JaktfeltController;
 use App\Controller\V3\V3OnboardingController;
 use App\Controller\V3\V3RegistrationController;
 use App\Controller\V3\V3LoginController;
+use App\Controller\V3\V3PasswordController;
 use App\Controller\V3\V3SeriesController;
 use App\Controller\V3\V3SpaceController;
 use App\Support\PortalActiveSpace;
@@ -27,6 +28,7 @@ return function (Router $router): void {
     }
 
     $login = new V3LoginController();
+    $password = new V3PasswordController();
     $dashboard = new V3DashboardController();
     $context = new V3ContextController();
     $spaces = new V3SpaceController();
@@ -65,6 +67,10 @@ return function (Router $router): void {
     $router->get(PortalPaths::login(), fn () => $login->showForm());
     $router->post(PortalPaths::login(), fn () => $login->submit());
     $router->post(PortalPaths::logout(), fn () => $login->logout());
+    $router->get(PortalPaths::glemtPassord(), fn () => $password->forgotForm());
+    $router->post(PortalPaths::glemtPassord(), fn () => $password->forgotSubmit());
+    $router->get(PortalPaths::tilbakestillPassord(), fn () => $password->resetForm());
+    $router->post(PortalPaths::tilbakestillPassord(), fn () => $password->resetSubmit());
 
     $router->get(PortalPaths::kontekstOrganisasjon(), fn () => $context->selectOrganization());
     $router->get(PortalPaths::kontekstOrganisasjonBytt(), fn () => $context->switchOrganization());

@@ -26,9 +26,6 @@ $errors = is_array($errors ?? null) ? $errors : [];
         <label for="name">Navn *</label>
         <input type="text" id="name" name="name" required value="<?= $h((string) ($form['name'] ?? '')) ?>">
 
-        <label for="short_name">Kortnavn</label>
-        <input type="text" id="short_name" name="short_name" value="<?= $h((string) ($form['short_name'] ?? '')) ?>">
-
         <label for="organization_number">Organisasjonsnummer</label>
         <input type="text" id="organization_number" name="organization_number" value="<?= $h((string) ($form['organization_number'] ?? '')) ?>">
 

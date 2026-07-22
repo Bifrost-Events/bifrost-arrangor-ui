@@ -27,6 +27,16 @@ final class PortalPaths
         return '/logout';
     }
 
+    public static function glemtPassord(): string
+    {
+        return '/glemt-passord';
+    }
+
+    public static function tilbakestillPassord(): string
+    {
+        return '/tilbakestill-passord';
+    }
+
     public static function cups(): string
     {
         return '/cups';
@@ -249,7 +259,8 @@ final class PortalPaths
         }
 
         $roots = [
-            '/oversikt', '/login', '/logout', '/cups', '/cup', '/sesonger',
+            '/oversikt', '/login', '/logout', '/glemt-passord', '/tilbakestill-passord',
+            '/cups', '/cup', '/sesonger',
             '/arrangorer', '/stevner', '/kontekst',
             '/kom-i-gang', '/mine-organisasjoner', '/arrangor-soknader',
         ];
