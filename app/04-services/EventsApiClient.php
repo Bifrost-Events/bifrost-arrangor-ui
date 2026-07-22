@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Support\Config;
+use App\Support\PortalV3Session;
 
 final class EventsApiClient
 {
@@ -502,6 +503,11 @@ final class EventsApiClient
 
     private function buildCookieHeader(): string
     {
+        $stored = PortalV3Session::getAdminApiCookie();
+        if ($stored !== '') {
+            return $stored;
+        }
+
         $parts = [];
         if (!empty($_COOKIE['BIFROSTADMIN'])) {
             $parts[] = 'BIFROSTADMIN=' . $_COOKIE['BIFROSTADMIN'];
@@ -536,6 +542,7 @@ final class EventsApiClient
         }
 
         $responseHeaders = [];
+        $verifySsl = ($_ENV['EVENTS_SSL_VERIFY'] ?? 'true') !== 'false';
         $curlOptions = [
             CURLOPT_CUSTOMREQUEST => $method,
             CURLOPT_RETURNTRANSFER => true,
@@ -545,6 +552,8 @@ final class EventsApiClient
             CURLOPT_TIMEOUT => 12,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_MAXREDIRS => 3,
+            CURLOPT_SSL_VERIFYPEER => $verifySsl,
+            CURLOPT_SSL_VERIFYHOST => $verifySsl ? 2 : 0,
             CURLOPT_HEADERFUNCTION => static function ($curl, string $headerLine) use (&$responseHeaders) {
                 $trimmed = trim($headerLine);
                 if ($trimmed !== '') {

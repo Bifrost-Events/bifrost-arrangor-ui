@@ -15,6 +15,7 @@ final class PortalV3Session
     private const ONBOARDING_APP_KEY = 'portal_v3_onboarding_application_id';
     private const ONBOARDING_ORG_KEY = 'portal_v3_onboarding_org_id';
     private const ONBOARDING_SERIES_KEY = 'portal_v3_onboarding_series_id';
+    private const ADMIN_API_COOKIE_KEY = 'portal_v3_admin_api_cookie';
 
     public const WORK_MODE_CUP = 'cup';
     public const WORK_MODE_ARRANGER = 'arranger';
@@ -55,7 +56,34 @@ final class PortalV3Session
             $_SESSION[self::ONBOARDING_APP_KEY],
             $_SESSION[self::ONBOARDING_ORG_KEY],
             $_SESSION[self::ONBOARDING_SERIES_KEY],
+            $_SESSION[self::ADMIN_API_COOKIE_KEY],
         );
+    }
+
+    public static function setAdminApiCookie(string $cookie): void
+    {
+        Session::startRequired();
+        $cookie = trim($cookie);
+        if ($cookie === '') {
+            unset($_SESSION[self::ADMIN_API_COOKIE_KEY]);
+
+            return;
+        }
+        $_SESSION[self::ADMIN_API_COOKIE_KEY] = $cookie;
+    }
+
+    public static function getAdminApiCookie(): string
+    {
+        Session::startRequired();
+        $cookie = $_SESSION[self::ADMIN_API_COOKIE_KEY] ?? '';
+
+        return is_string($cookie) ? $cookie : '';
+    }
+
+    public static function clearAdminApiCookie(): void
+    {
+        Session::startRequired();
+        unset($_SESSION[self::ADMIN_API_COOKIE_KEY]);
     }
 
     public static function setOrganizationId(?int $orgId): void

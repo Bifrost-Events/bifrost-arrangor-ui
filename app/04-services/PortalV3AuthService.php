@@ -43,6 +43,17 @@ final class PortalV3AuthService
         $user = $this->sessionUserFromRow($row);
         PortalV3Session::setAuth($user);
         AdminSessionBridge::syncFromPortalUser($user);
+        $apiSession = AdminApiSession::establish($email, $password);
+        if (!($apiSession['ok'] ?? false)) {
+            PortalV3Session::clearAuth();
+            AdminSessionBridge::clear();
+            AdminApiSession::clear();
+
+            return [
+                'ok' => false,
+                'error' => (string) ($apiSession['error'] ?? 'Kunne ikke etablere admin-sesjon.'),
+            ];
+        }
 
         return ['ok' => true, 'user' => $user];
     }
@@ -98,6 +109,18 @@ final class PortalV3AuthService
         $user = $this->sessionUserFromRow($row);
         PortalV3Session::setAuth($user);
         AdminSessionBridge::syncFromPortalUser($user);
+        $apiSession = AdminApiSession::establish($email, $password);
+        if (!($apiSession['ok'] ?? false)) {
+            // Konto finnes; la brukeren logge inn på nytt hvis API-sesjon feilet.
+            AdminApiSession::clear();
+
+            return [
+                'ok' => false,
+                'error' => 'Konto opprettet, men admin-sesjon feilet: '
+                    . (string) ($apiSession['error'] ?? 'ukjent feil')
+                    . ' Prøv å logge inn.',
+            ];
+        }
 
         return ['ok' => true, 'user' => $user];
     }
@@ -106,6 +129,7 @@ final class PortalV3AuthService
     {
         PortalV3Session::clearAuth();
         AdminSessionBridge::clear();
+        AdminApiSession::clear();
     }
 
     /** @param array<string, mixed> $row */
