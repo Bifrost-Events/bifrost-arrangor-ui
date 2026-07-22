@@ -1,0 +1,82 @@
+{
+  "cup_id": "namdal-jaktfeltkarusell",
+  "tenant_slug": "namdal-jaktfeltkarusell",
+  "name": "Jaktfeltkarusell Namdalen",
+  "short_name": "Namdal",
+  "domain": "namdal.jaktfeltkarusell.local",
+  "organizer_portal_url": "",
+  "brand": {
+    "logo": "/assets/cups/namdal/logo.jpg",
+    "primary_color": "#2d5016",
+    "secondary_color": "#234012",
+    "accent_color": "#e8eee3",
+    "header_bg": "#2d5016",
+    "hero_image": null,
+    "tagline": "Jaktfeltcupen i Namdal – stevner, resultater og sammenlagt"
+  },
+  "layout": {
+    "template": "regional",
+    "frontpage_blocks": [
+      "intro",
+      "stats",
+      "sponsors",
+      "about",
+      "contact"
+    ],
+    "menu": [
+      {"id": "nav_calendar", "label": "Stevnekalender", "url": "/calendar"},
+      {"id": "nav_results", "label": "Resultater", "url": "/results", "feature": "results"},
+      {"id": "nav_standings", "label": "Sammenlagt", "url": "/sammenlagt", "feature": "standings"},
+      {"id": "nav_about", "label": "Om", "url": "/om"}
+    ]
+  },
+  "features": {
+    "signup": true,
+    "results": true,
+    "standings": true,
+    "sponsors": true,
+    "news": false,
+    "custom_pages": false,
+    "map": false,
+    "archive": true
+  },
+  "sponsors": {
+    "presentation_level": "standard",
+    "heading": "Våre sponsorer",
+    "lead": "Jaktfeltkarusell Namdalen er avhengig av støtte fra næringsliv og lokale aktører. Takk til alle som bidrar.",
+    "footer_text": "Det jobbes stadig med å få på plass flere sponsorer. Ønsker du å bli sponsor? Ta kontakt med cuparrangør eller stevnearrangør.",
+    "placements": ["frontpage_middle"],
+    "tiers": {
+      "hovedsponsor": [
+        {"name": "Sjur Ivar Hjellum", "url": "", "logo": "/assets/sponsors/sjur-ivar-hjellum-utvikling.svg"},
+        {"name": "Anne Britts", "url": "", "logo": "/assets/sponsors/anne-britts-arrangementservice.svg"}
+      ],
+      "gull": [
+        {
+          "name": "Nava Sport",
+          "url": "https://navasport.no/",
+          "logo": "/assets/sponsors/gull-sponsor.svg",
+          "sub_logos_label": "I samarbeid med:",
+          "sub_logos": [{"name": "Norma", "logo": "/assets/sponsors/logo_Norma.JPG"}]
+        },
+        {"name": "Råvaren", "url": "https://www.raavaren.no/", "logo": "/assets/sponsors/raavaren-logo-hvit.png", "tile_bg": "#0f4a3c", "tile_border": "1px solid rgba(255,255,255,0.08)"},
+        {"name": "Jarnheimr", "url": "https://www.jarnheimr.no/", "logo": "/assets/sponsors/jarnheimr.png", "tile_border": "none"}
+      ],
+      "sølv": [
+        {"name": "A-TEC", "url": "", "logo": "/assets/sponsors/A-TEC_LOGO24_positiv.png", "logo_fit": "cover", "tile_border": "none", "logo_scale_pct": 75},
+        {"name": "KKC of Norway", "url": "", "logo": "/assets/sponsors/KKC_of_Norway_37x85.svg", "logo_fit": "cover", "tile_border": "none"}
+      ],
+      "bronse": [
+        {"name": "UtmarksCompagniet", "url": "https://utmarkscompagniet.no/", "logo": "/assets/sponsors/Logo_utmarkscompagniet.jpg.png", "tile_border": "none", "logo_scale_pct": 115}
+      ],
+      "samarbeidspartner": []
+    }
+  },
+  "content": {
+    "frontpage_title": "Velkommen til Jaktfeltkarusell Namdalen 2026",
+    "intro_text": "Jaktfeltkarusell Namdalen er jaktfeltcupen i Namdal – med stevnekalender, resultater, sammenlagt og påmelding samlet på ett sted for sesongen 2026.\n\nHer følger du hele cupen: kommende stevner, arrangører, deltakere og offisielle resultater. Registrer deg for å melde deg på, eller bruk menyen over for å gå rett til det du trenger.",
+    "about_text": "Jaktfeltkarusell Namdalen samler jaktfeltstevner i Namdal med felles sesong, sammenlagt og påmelding. Cupen er bygget for lokale arrangører og deltakere som vil følge sesongen fra første til siste stevne.",
+    "contact_text": "Spørsmål om cupen, påmelding eller sponsing? Ta kontakt med cuparrangør eller stevnearrangør via kontaktinformasjon på Om-siden."
+  },
+  "custom_pages": []
+}

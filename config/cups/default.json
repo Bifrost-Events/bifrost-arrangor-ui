@@ -1,0 +1,48 @@
+{
+  "cup_id": "default",
+  "tenant_slug": "default",
+  "name": "Bifrost Cup",
+  "short_name": "Bifrost",
+  "domain": "localhost",
+  "organizer_portal_url": "",
+  "brand": {
+    "logo": null,
+    "primary_color": "#2c5530",
+    "secondary_color": "#1e2a22",
+    "accent_color": "#e8f0e9",
+    "hero_image": null,
+    "tagline": "Offentlig cupflate i Bifrost"
+  },
+  "layout": {
+    "template": "default",
+    "frontpage_blocks": ["intro", "contact"],
+    "menu": [
+      {"id": "nav_calendar", "label": "Stevnekalender", "url": "/calendar"},
+      {"id": "nav_results", "label": "Resultater", "url": "/results"},
+      {"id": "nav_standings", "label": "Sammenlagt", "url": "/sammenlagt", "feature": "standings"},
+      {"id": "nav_about", "label": "Om", "url": "/om"}
+    ]
+  },
+  "features": {
+    "signup": true,
+    "results": true,
+    "standings": true,
+    "sponsors": false,
+    "news": false,
+    "custom_pages": false,
+    "map": false,
+    "archive": false
+  },
+  "sponsors": {
+    "presentation_level": "minimal",
+    "placements": [],
+    "tiers": {}
+  },
+  "content": {
+    "frontpage_title": "Velkommen",
+    "intro_text": "Dette er standard cup-config. Legg til host-mapping for å laste en managed cup.",
+    "about_text": "",
+    "contact_text": "Kontakt cuparrangør for spørsmål."
+  },
+  "custom_pages": []
+}

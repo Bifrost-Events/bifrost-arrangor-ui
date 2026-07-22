@@ -197,12 +197,21 @@ final class PortalCupBrand
     {
         $configured = trim((string) ($_ENV['PUBLIC_UI_PATH'] ?? Config::get('app.public_ui_path', '') ?? ''));
         if ($configured !== '') {
-            return rtrim($configured, '/\\') . '/config/cups';
+            $path = rtrim($configured, '/\\') . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'cups';
+            if (is_dir($path)) {
+                return $path;
+            }
         }
 
-        // Sibling: bifrost/bifrost-arrangor-ui → bifrost/bifrost-public-ui
-        return dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'bifrost-public-ui'
+        // Lokal monorepo: sibling bifrost-public-ui (én SoT under utvikling)
+        $sibling = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'bifrost-public-ui'
             . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'cups';
+        if (is_dir($sibling)) {
+            return $sibling;
+        }
+
+        // Test/prod FTP: bundlet i arrangør-UI (deploy-manifest include config/)
+        return dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'cups';
     }
 
     private static function requestPublicHost(): string

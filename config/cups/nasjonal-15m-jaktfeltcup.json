@@ -1,0 +1,92 @@
+{
+  "cup_id": "nasjonal-15m-jaktfeltcup",
+  "tenant_slug": "nasjonal-15m-jaktfeltcup",
+  "name": "Nasjonal 15m Jaktfeltcup",
+  "short_name": "Jaktfeltcup",
+  "domain": "jaktfeltcup.local",
+  "organizer_portal_url": "",
+  "brand": {
+    "logo": "/assets/cups/jaktfeltcup/logo.png",
+    "primary_color": "#785032",
+    "secondary_color": "#643c1e",
+    "accent_color": "#f8f9fa",
+    "header_bg": "#212529",
+    "primary_light": "#b48c64",
+    "hero_image": "/assets/cups/jaktfeltcup/logo.png",
+    "tagline": "Innendørs jaktfelt for alle – november til februar"
+  },
+  "layout": {
+    "template": "national",
+    "frontpage_blocks": [
+      "hero",
+      "info",
+      "highlight",
+      "role_cards",
+      "results_teaser",
+      "contact"
+    ],
+    "menu": [
+      {"id": "nav_calendar", "label": "Stevnekalender", "url": "/calendar"},
+      {"id": "nav_results", "label": "Resultater", "url": "/results", "feature": "results"},
+      {"id": "nav_standings", "label": "Sammenlagt", "url": "/sammenlagt", "feature": "standings"},
+      {"id": "nav_archive", "label": "Arkiv", "url": "/arkiv", "feature": "archive"},
+      {"id": "nav_about", "label": "Om", "url": "/om"}
+    ]
+  },
+  "features": {
+    "signup": true,
+    "results": true,
+    "standings": true,
+    "sponsors": true,
+    "news": false,
+    "custom_pages": false,
+    "map": false,
+    "archive": true
+  },
+  "sponsors": {
+    "presentation_level": "minimal",
+    "heading": "Bli sponsor",
+    "lead": "Nasjonal 15m Jaktfeltcup søker samarbeidspartnere som vil nå jaktskyttere over hele landet.",
+    "footer_text": "Ta kontakt med cuparrangør for sponsorpakker og eksponering gjennom sesongen.",
+    "placements": ["footer"],
+    "tiers": {
+      "hovedsponsor": [],
+      "gull": [],
+      "sølv": [],
+      "bronse": [],
+      "samarbeidspartner": []
+    }
+  },
+  "content": {
+    "frontpage_title": "Velkommen til Nasjonal 15m Jaktfeltcup!",
+    "intro_text": "",
+    "about_text": "Nasjonal 15m Jaktfeltcup er et landsdekkende konsept som samler jegere og skyttere gjennom vinterhalvåret. Cupen består av fire innledende runder som skytes på 15 m bane, med finalehelg på våren.",
+    "contact_text": "Nasjonal jaktfeltcup – resultater og informasjon. Kontakt cuparrangør for påmelding og sponsing.",
+    "hero_subtitle": "Innendørs jaktfelt for alle – november til februar. Her finner du resultater, påmelding og informasjon.",
+    "info_box": {
+      "title": "Om cupen",
+      "lead": "Nasjonal 15m Jaktfeltcup er et landsdekkende konsept som samler jegere og skyttere gjennom vinterhalvåret.",
+      "facts": [
+        {"label": "Sesong", "value": "Oktober – februar"},
+        {"label": "Avstand", "value": "15 meter innendørs"},
+        {"label": "Runder", "value": "5 innledende + finale"},
+        {"label": "Deltakere", "value": "Alle nivåer velkommen"}
+      ]
+    },
+    "highlight": {
+      "title": "Trekkpremier",
+      "body": "Hovedtyngden av premier er trekkpremier – alle deltakere har like stor sjanse til å vinne, uavhengig av ferdighetsnivå. Delta i minimum 3 av 5 innledende runder for å være med på trekkingen."
+    },
+    "role_cards": {
+      "title": "Bli med i cupen",
+      "lead": "Enten du vil arrangere, sponse, delta eller følge med – det er plass for alle.",
+      "cards": [
+        {"label": "Arrangører", "url": "/om"},
+        {"label": "Sponsorer", "url": "/#sponsors"},
+        {"label": "Stevnekalender", "url": "/calendar"},
+        {"label": "Finaler", "url": "/om"}
+      ]
+    }
+  },
+  "custom_pages": []
+}

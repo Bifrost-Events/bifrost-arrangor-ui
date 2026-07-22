@@ -464,9 +464,15 @@ final class V3SeriesController
 
         $personId = PortalV3Auth::personId() ?? 0;
         $userId = (int) (PortalV3Auth::user()['user_id'] ?? 0);
-        $orgId = (int) ($services->organizationContext->activeOrganizationId() ?? 0);
-        $season = $services->series->findAccessible($personId, $seasonRootId, $orgId);
-        if ($season === null || !$services->seriesPolicy->canEdit($personId, $season, $orgId)) {
+        $resolved = $this->resolveSeriesAccess($services, $personId, $seasonRootId);
+        if ($resolved === null) {
+            PortalV3Session::setFlash('error', 'Sesong ikke funnet eller ingen tilgang.');
+
+            return Response::redirect(PortalPaths::cup());
+        }
+        $orgId = $resolved['org_id'];
+        $season = $resolved['series'];
+        if (!$services->seriesPolicy->canEdit($personId, $season, $orgId)) {
             PortalV3Session::setFlash('error', 'Sesong ikke funnet eller ingen tilgang.');
 
             return Response::redirect(PortalPaths::cup());
@@ -648,9 +654,15 @@ final class V3SeriesController
 
         $personId = PortalV3Auth::personId() ?? 0;
         $userId = (int) (PortalV3Auth::user()['user_id'] ?? 0);
-        $orgId = (int) ($services->organizationContext->activeOrganizationId() ?? 0);
-        $season = $services->series->findAccessible($personId, $seasonRootId, $orgId);
-        if ($season === null || !$services->seriesPolicy->canEdit($personId, $season, $orgId)) {
+        $resolved = $this->resolveSeriesAccess($services, $personId, $seasonRootId);
+        if ($resolved === null) {
+            PortalV3Session::setFlash('error', 'Sesong ikke funnet eller ingen tilgang.');
+
+            return Response::redirect(PortalPaths::cup());
+        }
+        $orgId = $resolved['org_id'];
+        $season = $resolved['series'];
+        if (!$services->seriesPolicy->canEdit($personId, $season, $orgId)) {
             PortalV3Session::setFlash('error', 'Sesong ikke funnet eller ingen tilgang.');
 
             return Response::redirect(PortalPaths::cup());
@@ -712,8 +724,9 @@ final class V3SeriesController
         }
 
         $seasonFull = $services->series->findAccessible($personId, $seasonRootId, $orgId) ?? $season;
+        $ownerOrgId = (int) ($seasonFull['owner_org_id'] ?? $orgId);
         $seasonData = [
-            'owner_org_id' => (int) ($seasonFull['owner_org_id'] ?? $orgId),
+            'owner_org_id' => $ownerOrgId,
             'space_id' => $spaceId,
             'parent_series_id' => null,
             'name' => (string) ($seasonFull['name'] ?? ''),
@@ -743,7 +756,7 @@ final class V3SeriesController
         foreach ($periods as $i => $period) {
             $n = $i + 1;
             $data = [
-                'owner_org_id' => $orgId,
+                'owner_org_id' => $ownerOrgId,
                 'space_id' => $spaceId,
                 'parent_series_id' => $seasonRootId,
                 'name' => $roundLabel . ' ' . $n,
@@ -777,6 +790,38 @@ final class V3SeriesController
         }
 
         return Response::redirect(PortalPaths::cup() . '#season-' . $seasonRootId);
+    }
+
+    /**
+     * Finn serie + org brukeren kan aksessere (aktiv org først, deretter øvrige admin-orgs).
+     *
+     * @return array{series: array<string, mixed>, org_id: int}|null
+     */
+    private function resolveSeriesAccess(PortalV3Services $services, int $personId, int $seriesId): ?array
+    {
+        $activeOrgId = (int) ($services->organizationContext->activeOrganizationId() ?? 0);
+        if ($activeOrgId > 0) {
+            $series = $services->series->findAccessible($personId, $seriesId, $activeOrgId);
+            if ($series !== null) {
+                return ['series' => $series, 'org_id' => $activeOrgId];
+            }
+        }
+
+        foreach ($services->organizationContext->administrableOrganizations($personId) as $org) {
+            $orgId = (int) ($org['org_id'] ?? 0);
+            if ($orgId <= 0 || $orgId === $activeOrgId) {
+                continue;
+            }
+            $series = $services->series->findAccessible($personId, $seriesId, $orgId);
+            if ($series === null) {
+                continue;
+            }
+            $services->organizationContext->setActiveOrganization($orgId, $personId, false);
+
+            return ['series' => $series, 'org_id' => $orgId];
+        }
+
+        return null;
     }
 
     /**

@@ -42,11 +42,13 @@ final class PortalBoundCup
         if ($space === null && $domainBound) {
             $spaces = $this->services->eventSpaces->listAdministrable($personId);
             if (count($spaces) >= 1) {
-                $space = $spaces[0];
-                $sid = (int) ($space['space_id'] ?? 0);
+                $sid = (int) ($spaces[0]['space_id'] ?? 0);
                 if ($sid > 0) {
                     PortalV3Session::setSpaceId($sid);
-                    $space = $this->services->eventSpaces->findAccessibleForPerson($personId, $sid) ?? $space;
+                    $space = $this->services->eventSpaces->findAccessibleForPerson($personId, $sid);
+                    if ($space === null) {
+                        PortalV3Session::setSpaceId(null);
+                    }
                 }
             }
         }
@@ -70,9 +72,15 @@ final class PortalBoundCup
         $seasonSeriesIds = [];
 
         if ($space !== null) {
-            $orgId = (int) ($this->services->organizationContext->activeOrganizationId()
-                ?? $space['owner_org_id']
-                ?? 0);
+            $ownerOrgId = (int) ($space['owner_org_id'] ?? 0);
+            $activeOrgId = (int) ($this->services->organizationContext->activeOrganizationId() ?? 0);
+            if ($ownerOrgId > 0
+                && $this->services->spacePolicy->canAdministerCup($personId, $space, $ownerOrgId)
+            ) {
+                $orgId = $ownerOrgId;
+            } else {
+                $orgId = $activeOrgId > 0 ? $activeOrgId : $ownerOrgId;
+            }
             if ($orgId > 0) {
                 $hierarchy = $this->services->series->hierarchyForSpace(
                     $personId,

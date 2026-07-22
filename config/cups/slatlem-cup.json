@@ -1,0 +1,93 @@
+{
+  "cup_id": "slatlem-cup",
+  "tenant_slug": "slatlem-cup",
+  "name": "Slatlem Cup",
+  "short_name": "Slatlem",
+  "domain": "slatlemcup.local",
+  "organizer_portal_url": "https://arrangor.bifrost.local",
+  "brand": {
+    "logo": null,
+    "primary_color": "#1a365d",
+    "secondary_color": "#0f2744",
+    "accent_color": "#d4a843",
+    "header_bg": "#0f2744",
+    "hero_image": null,
+    "tagline": "Premium jaktfeltcup – sterke partnere, sterke opplevelser"
+  },
+  "layout": {
+    "template": "partner",
+    "frontpage_blocks": [
+      "hero",
+      "intro",
+      "sponsors",
+      "sponsor_cta",
+      "signup_teaser",
+      "contact"
+    ],
+    "menu": [
+      {"id": "nav_calendar", "label": "Stevnekalender", "url": "/calendar"},
+      {"id": "nav_results", "label": "Resultater", "url": "/results", "feature": "results"},
+      {"id": "nav_standings", "label": "Sammenlagt", "url": "/sammenlagt", "feature": "standings"},
+      {"id": "nav_about", "label": "Om cupen", "url": "/om"}
+    ]
+  },
+  "features": {
+    "signup": true,
+    "results": true,
+    "standings": true,
+    "sponsors": true,
+    "news": true,
+    "custom_pages": true,
+    "map": false,
+    "archive": false
+  },
+  "sponsors": {
+    "presentation_level": "prominent",
+    "heading": "Hovedsponsor og partnere",
+    "lead": "Slatlem Cup er bygget i tett samarbeid med næringsliv. Våre partnere er synlige gjennom hele cupopplevelsen – fra påmelding til finale.",
+    "footer_text": "Interessert i partnerskap? Kontakt oss for skreddersydde sponsorpakker med målbar eksponering mot jaktmiljøet.",
+    "placements": ["hero", "frontpage_middle", "footer"],
+    "tiers": {
+      "hovedsponsor": [
+        {"name": "Slatlem AS", "url": "https://example.com/slatlem", "logo": null, "featured": true}
+      ],
+      "gull": [
+        {"name": "Partner Gull 1", "url": "", "logo": null},
+        {"name": "Partner Gull 2", "url": "", "logo": null}
+      ],
+      "sølv": [
+        {"name": "Partner Sølv 1", "url": "", "logo": null},
+        {"name": "Partner Sølv 2", "url": "", "logo": null},
+        {"name": "Partner Sølv 3", "url": "", "logo": null}
+      ],
+      "bronse": [
+        {"name": "Partner Bronse 1", "url": "", "logo": null}
+      ],
+      "samarbeidspartner": [
+        {"name": "Lokalt samarbeid", "url": "", "logo": null},
+        {"name": "Mediesamarbeid", "url": "", "logo": null}
+      ]
+    }
+  },
+  "content": {
+    "frontpage_title": "Velkommen til Slatlem Cup",
+    "intro_text": "Slatlem Cup kombinerer konkurransejaktfelt med tydelig partnerverdi. Cupen er kuratert for å gi arrangører, deltakere og sponsorer en helhetlig opplevelse – med profesjonell presentasjon og synlighet gjennom hele sesongen.",
+    "about_text": "Slatlem Cup er et partnercase i Bifrost: managed oppsett med prominent sponsorprofil, tilpasset innhold og dedikert oppfølging fra Bifrost-teamet.",
+    "contact_text": "For partnerskap, påmelding eller presse: kontakt cupsekretariatet via arrangørportalen eller e-post oppgitt i cupinvitasjonen.",
+    "hero_subtitle": "Der jaktfelt møter partnerskap – sesong, stevner og synlighet for alle involverte.",
+    "sponsor_cta": {
+      "title": "Bli partner",
+      "body": "Vi tilbyr skreddersydde sponsorpakker med eksponering på cupens digitale flater, ved stevner og i sesongkommunikasjon.",
+      "button_label": "Les om partnerskap",
+      "button_url": "/#sponsors"
+    }
+  },
+  "custom_pages": [
+    {
+      "slug": "partnere",
+      "title": "Partnere",
+      "menu_label": "Partnere",
+      "url": "/sponsor"
+    }
+  ]
+}

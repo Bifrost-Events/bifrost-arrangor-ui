@@ -40,4 +40,27 @@ Smoke bruker `APP_URL=https://test.arrangor.jaktfeltcup.no` fra GitHub Environme
 
 - `GET /health` på begge domener → `arrangor_ui`
 - Login viser cup/sesong per host
+- Header-farger/logo matcher lokal (brand fra `config/cups/*.json`)
 - `npm run quality:local` med `arrangor-jaktfeltcup` og `arrangor-namdal` manifests
+
+## Brand / cup-navn (match lokal)
+
+Arrangør leser farger fra `config/cups/` (bundlet i deploy). Logo hentes via `PUBLIC_SITE_URL` (eller public-host fra JSON).
+
+På **server `.env`** (test/prod), sett f.eks.:
+
+```env
+PUBLIC_SITE_URL=https://test.jaktfeltcup.no
+# prod: PUBLIC_SITE_URL=https://jaktfeltcup.no
+```
+
+Cup-tittel i header er `event_spaces.name`. For å matche lokal:
+
+```sql
+UPDATE event_spaces
+SET name = 'Nasjonal 15m Jaktfeltcup'
+WHERE application_id = (SELECT application_id FROM app_applications WHERE application_key = 'jaktfeltcup' LIMIT 1)
+  AND deleted_at IS NULL;
+```
+
+Kjør mot samme DB som admin-core for miljøet (test/prod).

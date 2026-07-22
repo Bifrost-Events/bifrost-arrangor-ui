@@ -63,13 +63,22 @@ final class V3SpaceController
         $space = $services->eventSpaces->findAccessibleForPerson($personId, $spaceId);
         if ($space === null) {
             PortalV3Session::setFlash('error', 'Event Space ikke funnet eller ingen tilgang.');
+            PortalV3Session::setSpaceId(null);
 
             return Response::redirect(PortalPaths::cups());
         }
 
-        $orgId = (int) ($services->organizationContext->activeOrganizationId()
-            ?? $space['owner_org_id']
-            ?? 0);
+        $ownerOrgId = (int) ($space['owner_org_id'] ?? 0);
+        $activeOrgId = (int) ($services->organizationContext->activeOrganizationId() ?? 0);
+        // Cup-admin: bruk eier-org for hierarki (aktiv org kan være arrangør-org etter onboarding).
+        if ($ownerOrgId > 0 && $services->spacePolicy->canAdministerCup($personId, $space, $ownerOrgId)) {
+            $orgId = $ownerOrgId;
+            if ($activeOrgId !== $ownerOrgId) {
+                $services->organizationContext->setActiveOrganization($ownerOrgId, $personId, false);
+            }
+        } else {
+            $orgId = $activeOrgId > 0 ? $activeOrgId : $ownerOrgId;
+        }
         PortalV3Session::setSpaceId($spaceId);
         $hierarchy = $services->series->hierarchyForSpace($personId, $spaceId, $orgId);
         $labels = $services->labels->resolveForSpace($space);
@@ -260,37 +269,18 @@ final class V3SpaceController
             $roots = $hierarchy['roots'] ?? [];
             $children = $hierarchy['children'] ?? [];
 
-            // Alltid slå sammen godkjente seriearrangør-sesonger (API-hierarki kan være tomt/ufullstendig).
-            if ($arrangerOrgId > 0) {
-                $rootById = [];
-                foreach ($roots as $existingRoot) {
-                    $eid = (int) ($existingRoot['series_id'] ?? 0);
-                    if ($eid > 0) {
-                        $rootById[$eid] = $existingRoot;
-                    }
-                }
+            // Fallback: godkjent seriearrangør uten hierarki-treff (f.eks. API/filter-glipp)
+            if ($roots === [] && $arrangerOrgId > 0) {
                 foreach ($services->spaceParticipation->listOrganizerRootSeriesInSpace($arrangerOrgId, $spaceId) as $root) {
+                    $roots[] = $root;
                     $rid = (int) ($root['series_id'] ?? 0);
-                    if ($rid <= 0) {
-                        continue;
-                    }
-                    if (!isset($rootById[$rid])) {
-                        $rootById[$rid] = $root;
-                    } else {
-                        // Behold structure_type fra DB-fallback hvis API mangler det
-                        if (($rootById[$rid]['structure_type'] ?? '') === ''
-                            && ($root['structure_type'] ?? '') !== '') {
-                            $rootById[$rid]['structure_type'] = $root['structure_type'];
-                        }
-                    }
-                    if (!isset($children[$rid])) {
+                    if ($rid > 0 && !isset($children[$rid])) {
                         $children[$rid] = [];
                     }
                 }
-                $roots = array_values($rootById);
             }
 
-            // Fyll inn runder fra DB når hierarki mangler barn.
+            // Fyll inn runder fra DB når hierarki mangler barn men sesongen har rundestruktur.
             foreach ($roots as $root) {
                 $rid = (int) ($root['series_id'] ?? 0);
                 if ($rid <= 0) {
@@ -392,9 +382,22 @@ final class V3SpaceController
 
                 // Sesong uten runder (structure_type=events eller tom): flat listing.
                 $createHref = null;
-                if ($canCreateEvent
-                    && $services->spaceParticipation->orgIsSeriesOrganizer($arrangerOrgId, $rootId)) {
-                    $createHref = PortalPaths::sesongStevneNew($rootId);
+                if ($canCreateEvent) {
+                    $createTargetId = $this->resolveCreateSeriesId(
+                        $services,
+                        $personId,
+                        $arrangerOrgId,
+                        $rootId,
+                        [],
+                    );
+                    if ($createTargetId <= 0
+                        && ($structure === 'events' || $structure === '')
+                        && $services->spaceParticipation->orgIsSeriesOrganizer($arrangerOrgId, $rootId)) {
+                        $createTargetId = $rootId;
+                    }
+                    if ($createTargetId > 0) {
+                        $createHref = PortalPaths::sesongStevneNew($createTargetId);
+                    }
                 }
                 $seasonBlocks[] = [
                     'series_id' => $rootId,
@@ -403,9 +406,6 @@ final class V3SpaceController
                     'rounds' => [],
                     'create_href' => $createHref,
                     'create_batch_href' => null,
-                    'empty_hint' => ($structure === 'rounds' && $canCreateEvent)
-                        ? 'Sesongen er satt opp med rundestruktur, men har ingen runder ennå. Du kan likevel opprette stevne direkte i sesongen.'
-                        : null,
                 ];
             }
 
@@ -455,5 +455,43 @@ final class V3SpaceController
             'arranger_name' => $arrangerName,
             'season_blocks' => $seasonBlocks,
         ], $labels->plural('event'));
+    }
+
+    /**
+     * Velg serie/runde som tillater direkte stevneopprettelse under aktiv sesong.
+     *
+     * @param list<array<string, mixed>> $children
+     */
+    private function resolveCreateSeriesId(
+        PortalV3Services $services,
+        int $personId,
+        int $orgId,
+        int $seasonRootId,
+        array $children,
+    ): int {
+        $root = $services->series->findAccessible($personId, $seasonRootId, $orgId);
+        if ($root === null) {
+            return 0;
+        }
+        $structure = (string) ($root['structure_type'] ?? '');
+        if ($structure === 'events' || $structure === '') {
+            if ($structure === 'events') {
+                return $seasonRootId;
+            }
+            // Uavklart: hvis ingen barn, tillat på rot; ellers foretrekk første runde.
+            if ($children === []) {
+                return $seasonRootId;
+            }
+        }
+        foreach ($children as $child) {
+            $cid = (int) ($child['series_id'] ?? 0);
+            if ($cid <= 0) {
+                continue;
+            }
+            // Runder under sesong tillater typisk direkte events.
+            return $cid;
+        }
+
+        return $structure === 'events' ? $seasonRootId : 0;
     }
 }
