@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Controller\V3;
 
 use App\Service\PortalV3Services;
+use App\Service\SharedLoginSolutionsClient;
 use App\Support\PortalPaths;
-use App\Support\PortalV3;
 use App\Support\PortalV3Auth;
 use App\Support\PortalV3Session;
 use App\Support\PortalV3View;
@@ -21,7 +21,9 @@ final class V3LoginController
             return Response::redirect(PortalPaths::oversikt());
         }
 
-        return PortalV3View::render('login', [], 'Logg inn');
+        return PortalV3View::render('login', [
+            'shared_login_solutions' => (new SharedLoginSolutionsClient())->listSolutions(),
+        ], 'Logg inn');
     }
 
     /** @return array{status: int, headers: array<string, string>, body: string} */

@@ -39,7 +39,7 @@ $message = trim((string) ($message ?? ''));
             <a href="<?= $h($pp::login()) ?>">Tilbake til innlogging</a>
         </p>
     <?php else: ?>
-        <p class="muted">Oppgi e-postadressen til Bifrost-kontoen din. Hvis den er registrert, sender vi en lenke for å sette nytt passord.</p>
+        <p class="muted">Oppgi e-postadressen til Bifrost-brukerkontoen din. Hvis den er registrert, sender vi en lenke for å sette nytt passord.</p>
         <form method="post" action="<?= $h($pp::glemtPassord()) ?>">
             <label for="email">E-post</label>
             <input type="email" id="email" name="email" required autocomplete="email" autofocus>

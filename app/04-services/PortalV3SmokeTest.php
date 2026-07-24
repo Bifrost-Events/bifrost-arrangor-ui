@@ -242,18 +242,41 @@ final class PortalV3SmokeTest
 
         $loginHtml = $this->renderLoginSnippet();
         if (!str_contains($loginHtml, 'Kom i gang') || !str_contains($loginHtml, $pp::komIGang())) {
-            throw new \RuntimeException('Innloggingsside skal lenke til Kom i gang for nye arrangører');
+            throw new \RuntimeException('Innloggingsside skal lenke til Kom i gang for nye brukerkontoer');
         }
         if (!str_contains($loginHtml, 'Glemt passord') || !str_contains($loginHtml, $pp::glemtPassord())) {
             throw new \RuntimeException('Innloggingsside skal lenke til Glemt passord');
         }
-        if (!str_contains($loginHtml, 'arrangør') && !str_contains($loginHtml, 'Arrangør')) {
-            throw new \RuntimeException('Innloggingsside skal ha norsk hjelpetekst om arrangør');
+        if (!str_contains($loginHtml, 'brukerkonto') || !str_contains($loginHtml, 'arrangørprofil')
+            || !str_contains($loginHtml, 'arrangørtilgang')) {
+            throw new \RuntimeException('Innloggingsside skal skille brukerkonto, arrangørprofil og arrangørtilgang');
+        }
+        if (str_contains($loginHtml, 'arrangørkonto')) {
+            throw new \RuntimeException('Innloggingsside skal ikke snakke om egen arrangørkonto');
         }
         if (str_contains($loginHtml, 'Bifrost core og Events API')) {
             throw new \RuntimeException('Innloggingsside skal ikke vise teknisk API-jargon');
         }
-        $lines[] = 'OK: login-side lenker til Kom i gang og Glemt passord';
+        $lines[] = 'OK: login-side skiller brukerkonto / profil / tilgang';
+
+        $loginWithSolutions = $this->renderLoginSnippet([
+            [
+                'name' => 'Jaktfeltcup',
+                'url' => 'http://jaktfeltcup.local',
+            ],
+        ]);
+        if (!str_contains($loginWithSolutions, 'Jaktfeltcup')
+            || !str_contains($loginWithSolutions, 'http://jaktfeltcup.local')) {
+            throw new \RuntimeException('Innloggingsside skal vise dynamisk løsningsliste med lenke');
+        }
+        if (!str_contains($loginWithSolutions, 'Arrangørtilgang søkes og godkjennes separat')) {
+            throw new \RuntimeException('Innloggingsside skal ikke antyde automatisk arrangørtilgang');
+        }
+        $loginWithoutSolutions = $this->renderLoginSnippet([]);
+        if (str_contains($loginWithoutSolutions, 'Samme <strong>brukerkonto</strong> kan brukes')) {
+            throw new \RuntimeException('Tom løsningsliste skal skjule blokken (soft-fail)');
+        }
+        $lines[] = 'OK: dynamisk delt-innloggingsliste (soft-fail når tom)';
 
         if ($pp::glemtPassord() !== '/glemt-passord' || $pp::tilbakestillPassord() !== '/tilbakestill-passord') {
             throw new \RuntimeException('PortalPaths for glemt/tilbakestill passord er feil');
@@ -261,7 +284,7 @@ final class PortalV3SmokeTest
         $lines[] = 'OK: PortalPaths glemt/tilbakestill passord';
 
         $guestHtml = $this->renderGetStartedSnippet('account', []);
-        if (!str_contains($guestHtml, 'Opprett konto') || !str_contains($guestHtml, 'name="password"')) {
+        if (!str_contains($guestHtml, 'Opprett brukerkonto') || !str_contains($guestHtml, 'name="password"')) {
             throw new \RuntimeException('Gjest på Kom i gang skal se kontoopprettelse');
         }
         if (str_contains($guestHtml, 'Åpne serier')) {
@@ -270,7 +293,7 @@ final class PortalV3SmokeTest
         $lines[] = 'OK: gjest ser kontoopprettelse på Kom i gang';
 
         $orgStepHtml = $this->renderGetStartedSnippet('organization', []);
-        if (!str_contains($orgStepHtml, 'Organisasjon') || str_contains($orgStepHtml, 'Opprett konto og fortsett')) {
+        if (!str_contains($orgStepHtml, 'Organisasjon') || str_contains($orgStepHtml, 'Opprett brukerkonto og fortsett') || str_contains($orgStepHtml, 'Opprett konto og fortsett')) {
             throw new \RuntimeException('Organisasjonssteg i veiviser mangler eller viser konto-skjema');
         }
         if (!str_contains($orgStepHtml, 'Fremdrift') && !str_contains($orgStepHtml, 'Konto')) {
@@ -397,9 +420,13 @@ final class PortalV3SmokeTest
         return $lines;
     }
 
-    private function renderLoginSnippet(): string
+    /**
+     * @param list<array{name: string, url?: string|null}> $sharedLoginSolutions
+     */
+    private function renderLoginSnippet(array $sharedLoginSolutions = []): string
     {
         $pp = \App\Support\PortalPaths::class;
+        $shared_login_solutions = $sharedLoginSolutions;
         ob_start();
         include dirname(__DIR__, 2) . '/app/02-view/portal-v3/login.php';
 

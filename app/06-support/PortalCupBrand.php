@@ -99,17 +99,17 @@ final class PortalCupBrand
             'logo_url' => self::absoluteAssetUrl($logoPath, $publicBase),
             'tagline' => (string) ($brand['tagline'] ?? ''),
             'css_variables' => [
-                '--bg' => '#eef0eb',
+                '--bg' => '#f5f5f5',
                 '--sidebar' => $headerBg,
                 '--accent' => $primary,
-                '--accent-hover' => $secondary,
-                '--accent-soft' => $accentSoft,
+                '--accent-hover' => self::color($brand['primary_hover'] ?? null, $secondary),
+                '--accent-soft' => $accentSoft !== '' ? $accentSoft : '#f5ebe3',
                 '--card' => '#fff',
                 '--ink' => '#1a1a18',
                 '--muted' => '#5c635c',
                 '--cup-bar' => $headerBg,
                 '--sidebar-border' => $primary,
-                '--sidebar-muted' => $accentSoft,
+                '--sidebar-muted' => self::color($brand['primary_light'] ?? null, '#b48c64'),
             ],
         ];
 

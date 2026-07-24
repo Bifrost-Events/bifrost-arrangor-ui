@@ -46,7 +46,10 @@ $seasonLabel = static function (array $series): string {
 };
 ?>
 <h1>Kom i gang</h1>
-<p class="muted">Bli arrangør steg for steg<?= $domainBound && $domainAppName !== '' ? ' i ' . $h($domainAppName) : '' ?>.</p>
+<p class="muted">
+    Steg for steg: brukerkonto → arrangørprofil → søknad om arrangørtilgang
+    <?= $domainBound && $domainAppName !== '' ? ' i ' . $h($domainAppName) : '' ?>.
+</p>
 
 <?php if ($wizardSteps !== []): ?>
 <nav class="card" aria-label="Fremdrift" style="padding:.75rem 1rem;">
@@ -89,8 +92,10 @@ $seasonLabel = static function (array $series): string {
 
 <?php if ($step === 'account'): ?>
 <div class="card" style="max-width:28rem;">
-    <h2 style="margin-top:0;font-size:1.05rem;">Opprett konto</h2>
-    <p class="muted">Du trenger ikke ha konto fra før.</p>
+    <h2 style="margin-top:0;font-size:1.05rem;">Opprett brukerkonto</h2>
+    <p class="muted">
+        En vanlig Bifrost-brukerkonto for innlogging. Arrangørprofil og arrangørtilgang til cuper kommer i neste steg.
+    </p>
     <form method="post" action="<?= $h($pp::komIGang()) ?>">
         <input type="hidden" name="wizard_step" value="account">
         <label for="first_name">Fornavn</label>
@@ -116,11 +121,11 @@ $seasonLabel = static function (array $series): string {
         <input type="password" id="password_confirm" name="password_confirm" required minlength="8" autocomplete="new-password">
 
         <p style="margin-top:1rem;">
-            <button type="submit" class="btn">Opprett konto og fortsett</button>
+            <button type="submit" class="btn">Opprett brukerkonto og fortsett</button>
         </p>
     </form>
     <p class="muted" style="margin-top:1rem;">
-        Har du allerede konto? <a href="<?= $h($pp::login()) ?>">Logg inn</a>
+        Har du allerede brukerkonto? <a href="<?= $h($pp::login()) ?>">Logg inn</a>
     </p>
 </div>
 
