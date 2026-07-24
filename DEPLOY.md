@@ -47,11 +47,13 @@ Smoke bruker `APP_URL=https://test.arrangor.jaktfeltcup.no` fra GitHub Environme
 
 Arrangør leser farger fra `config/cups/` (bundlet i deploy). Logo hentes via `PUBLIC_SITE_URL` (eller public-host fra JSON).
 
-På **server `.env`** (test/prod), sett f.eks.:
+På **server `.env`** (test/prod) er `PUBLIC_SITE_URL` valgfri. Logo-URL bygges fra request-host
+(`test.arrangor.jaktfeltcup.no` → `https://test.jaktfeltcup.no/...`), slik at multi-cup
+fungerer uten hardkodet én cup-URL. JSON `domain` (ofte `*.local`) brukes bare som fallback.
 
 ```env
-PUBLIC_SITE_URL=https://test.jaktfeltcup.no
-# prod: PUBLIC_SITE_URL=https://jaktfeltcup.no
+# Valgfritt override (enkelt-cup). La stå tom for multi-cup host-avledning.
+# PUBLIC_SITE_URL=https://test.jaktfeltcup.no
 ```
 
 Cup-tittel i header er `event_spaces.name`. For å matche lokal:

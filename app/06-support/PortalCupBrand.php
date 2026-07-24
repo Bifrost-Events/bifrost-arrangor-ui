@@ -84,7 +84,10 @@ final class PortalCupBrand
         $headerBg = self::color($brand['header_bg'] ?? null, $secondary);
         $logoPath = trim((string) ($brand['logo'] ?? ''));
         $configDomain = self::normalizeHost((string) ($config['domain'] ?? ''));
-        $publicBase = self::publicSiteBaseUrl($configDomain !== '' ? $configDomain : $host);
+        // Request/public-host først — JSON domain er ofte *.local (lokal SoT) og må ikke
+        // overstyre test/prod (ellers blir logo https://jaktfeltcup.local/...).
+        $assetHost = $host !== '' ? $host : $configDomain;
+        $publicBase = self::publicSiteBaseUrl($assetHost);
 
         $profile = [
             'resolved' => true,
@@ -217,35 +220,22 @@ final class PortalCupBrand
     private static function requestPublicHost(): string
     {
         $host = strtolower(trim((string) ($_SERVER['HTTP_HOST'] ?? '')));
-        $host = preg_replace('/:\d+$/', '', $host) ?? $host;
-        if (str_starts_with($host, 'arrangor.')) {
-            $host = substr($host, strlen('arrangor.'));
-        }
+        $host = self::normalizeHost($host);
 
         $baseUrl = trim((string) (Config::get('app.base_url') ?? $_ENV['APP_BASE_URL'] ?? ''));
         if ($host === '' && $baseUrl !== '') {
             $parsed = parse_url($baseUrl);
-            $host = strtolower((string) ($parsed['host'] ?? ''));
-            if (str_starts_with($host, 'arrangor.')) {
-                $host = substr($host, strlen('arrangor.'));
-            }
+            $host = self::normalizeHost((string) ($parsed['host'] ?? ''));
         }
 
-        // namdal: arrangor.jaktfeltnamdalen.local → public host fragår HOST_MAP via application_key oftere
-        if ($host === 'jaktfeltnamdalen.local') {
-            return 'namdal.jaktfeltkarusell.local';
-        }
-
-        return self::normalizeHost($host);
+        return $host;
     }
 
     private static function normalizeHost(?string $host): string
     {
         $host = strtolower(trim((string) $host));
         $host = preg_replace('/:\d+$/', '', $host) ?? $host;
-        if (str_starts_with($host, 'arrangor.')) {
-            $host = substr($host, strlen('arrangor.'));
-        }
+        $host = self::stripArrangorLabel($host);
         if ($host === 'jaktfeltnamdalen.local') {
             return 'namdal.jaktfeltkarusell.local';
         }
@@ -253,19 +243,42 @@ final class PortalCupBrand
         return $host;
     }
 
+    /**
+     * arrangor.jaktfeltcup.no → jaktfeltcup.no
+     * test.arrangor.jaktfeltcup.no → test.jaktfeltcup.no
+     */
+    private static function stripArrangorLabel(string $host): string
+    {
+        if (preg_match('/^(?:([a-z0-9-]+)\.)?arrangor\.(.+)$/i', $host, $m) === 1) {
+            $prefix = trim((string) ($m[1] ?? ''));
+            $rest = trim((string) ($m[2] ?? ''));
+            if ($rest === '') {
+                return $host;
+            }
+
+            return $prefix !== '' ? $prefix . '.' . $rest : $rest;
+        }
+
+        return $host;
+    }
+
     private static function publicSiteBaseUrl(string $host): string
     {
+        $baseUrl = trim((string) (Config::get('app.base_url') ?? $_ENV['APP_BASE_URL'] ?? 'http://localhost'));
+        $appScheme = parse_url($baseUrl, PHP_URL_SCHEME) ?: 'http';
+
+        // Per-host (multi-cup): bygg fra request/public-host når vi har den.
+        if ($host !== '') {
+            $scheme = str_ends_with($host, '.local') || str_ends_with($host, '.test')
+                ? 'http'
+                : (is_string($appScheme) && $appScheme !== '' ? $appScheme : 'https');
+
+            return $scheme . '://' . $host;
+        }
+
         $configured = trim((string) ($_ENV['PUBLIC_SITE_URL'] ?? Config::get('app.public_site_url', '') ?? ''));
         if ($configured !== '') {
             return rtrim($configured, '/');
-        }
-
-        $baseUrl = trim((string) (Config::get('app.base_url') ?? $_ENV['APP_BASE_URL'] ?? 'http://localhost'));
-        $scheme = parse_url($baseUrl, PHP_URL_SCHEME) ?: 'http';
-
-        // Cupens egen public-host (fra JSON) trumfer PUBLIC_REGISTER_URL (kan være annen cup).
-        if ($host !== '') {
-            return $scheme . '://' . $host;
         }
 
         $register = trim((string) (Config::get('app.public_register_url') ?? $_ENV['PUBLIC_REGISTER_URL'] ?? ''));
